@@ -1,0 +1,7 @@
+---
+- name: Provision Complete Stack
+  hosts: all
+  become: yes
+  
+  tasks:
+    - import_tasks: playbooks/01-docker.yml
