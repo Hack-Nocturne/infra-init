@@ -4,4 +4,5 @@
   become: yes
   
   tasks:
-    - import_tasks: playbooks/01-docker.yml
+    - import_tasks: playbooks/01-warmup.yml
+    - import_tasks: playbooks/02-docker.yml
