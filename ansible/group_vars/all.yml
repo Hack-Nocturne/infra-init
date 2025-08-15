@@ -21,3 +21,29 @@ system_packages:
   - software-properties-common
 
 # endregion
+
+# region NGINX Variables
+
+server_name: "*.hack-nocturne.in"
+
+# Cloudflare Origin Cert & Key paths
+ssl_cert_path: /etc/nginx/ssl/cf_origin.pem
+ssl_key_path:  /etc/nginx/ssl/cf_origin.key
+
+# Health-checks (must return 200)
+healthcheck_path: /health-check
+healthcheck_host_header: hack-nocturne.in
+health_timeout_seconds: 2
+health_retries: 3
+
+# Blue pool
+blue_upstreams:
+  - { host: "127.0.0.1", port: 2020 }
+  - { host: "127.0.0.1", port: 2021 }
+
+# Green pool
+green_upstreams:
+  - { host: "127.0.0.1", port: 4040 }
+  - { host: "127.0.0.1", port: 4041 }
+
+# endregion

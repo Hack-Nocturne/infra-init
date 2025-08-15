@@ -1,0 +1,89 @@
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Create SSL dir
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Cloudflare Origin-server certificates
+  block:
+    - name: Push certificate
+      copy:
+        content: "{{ cf_cert }}"
+        dest: "{{ ssl_cert_path }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Push key
+      copy:
+        content: "{{ cf_key }}"
+        dest: "{{ ssl_key_path }}"
+        owner: root
+        group: root
+        mode: '0600'
+
+- name: Setup for blue/green deployment
+  block:
+    - name: Ensure Nginx conf.d directory exists
+      file:
+        path: /etc/nginx/conf.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Set default active color for blue/green deployment
+      copy:
+        dest: /etc/nginx/conf.d/active_color.conf
+        content: 'set $active_color "blue";'
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: Get Cloudflare trusted ips list
+  block:
+    - name: Fetch Cloudflare IPv4 list
+      uri:
+        url: https://www.cloudflare.com/ips-v4
+        return_content: yes
+      register: cf_ipv4
+
+    - name: Fetch Cloudflare IPv6 list
+      uri:
+        url: https://www.cloudflare.com/ips-v6
+        return_content: yes
+      register: cf_ipv6
+
+- name: Render Nginx config (blue/green aware with Cloudflare IPs)
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  vars:
+    cloudflare_ipv4: "{{ cf_ipv4.content.splitlines() }}"
+    cloudflare_ipv6: "{{ cf_ipv6.content.splitlines() }}"
+
+- name: Validate and reload Nginx
+  block:
+    - name: Validate config
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+      failed_when: nginx_test.rc != 0
+
+    - name: Reload
+      command: nginx -s reload
+      when: nginx_test.rc == 0
+
+- name: Ensure nginx started & enabled
+  service:
+    name: nginx
+    state: started
+    enabled: yes
