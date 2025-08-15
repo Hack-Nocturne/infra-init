@@ -38,7 +38,7 @@ jobs:
         working-directory: ./ansible
         run: |
           mkdir -p inventory
-          echo ${{ secrets.INVENTORY_YML }} > inventory/hosts.yml
+          echo "${{ secrets.INVENTORY_YML }}" > inventory/hosts.yml
 
       - name: Test connectivity
         working-directory: ./ansible
