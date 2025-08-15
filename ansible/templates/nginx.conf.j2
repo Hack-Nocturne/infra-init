@@ -2,17 +2,15 @@ user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
 
-include /etc/nginx/conf.d/active_color.conf;
-
-map $active_color $active_upstream {
-  default app_blue;
-  "blue"  app_blue;
-  "green" app_green;
-}
-
 events { worker_connections 1024; }
 
 http {
+  map $active_color $active_upstream {
+    default app_blue;
+    "blue"  app_blue;
+    "green" app_green;
+  }
+
   # Basic hardening
   sendfile on;
   tcp_nopush on;
@@ -56,6 +54,8 @@ http {
 
   # HTTPS with Cloudflare
   server {
+    include /etc/nginx/conf.d/active_color.conf;
+
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name {{ server_name }};
