@@ -1,3 +1,8 @@
+- name: Load cert and key as base64
+  set_fact:
+    cf_cert_b64: "{{ lookup('file', 'cf_cert.pem') | b64encode }}"
+    cf_key_b64:  "{{ lookup('file', 'cf_cert.key') | b64encode }}"
+
 - name: Install Nginx
   apt:
     name: nginx
@@ -16,7 +21,7 @@
   block:
     - name: Push certificate
       copy:
-        content: "{{ cf_cert }}"
+        content: "{{ cf_cert_b64 | b64decode }}"
         dest: "{{ ssl_cert_path }}"
         owner: root
         group: root
@@ -24,7 +29,7 @@
 
     - name: Push key
       copy:
-        content: "{{ cf_key }}"
+        content: "{{ cf_key_b64 | b64decode }}"
         dest: "{{ ssl_key_path }}"
         owner: root
         group: root
