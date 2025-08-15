@@ -1,8 +1,7 @@
----
 - name: Provision Complete Stack
   hosts: all
   become: yes
   
   tasks:
-    - import_tasks: playbooks/01-warmup.yml
-    - import_tasks: playbooks/02-docker.yml
+    - import_tasks: tasks/01-warmup.yml
+    - import_tasks: tasks/02-docker.yml

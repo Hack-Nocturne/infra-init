@@ -1,3 +1,23 @@
-# Docker related variables
+# region Docker Variables
+
 docker_network: "app-internal-nw"
 docker_network_type: "bridge"
+
+test_image: "alpine"
+test_command: "sleep 30d"
+test_container_name: "docker-alpine-test"
+
+# endregion
+
+# region Warmup Variables
+
+system_packages:
+  - curl
+  - virtualenv
+  - python3-pip
+  - ca-certificates
+  - python3-setuptools
+  - apt-transport-https
+  - software-properties-common
+
+# endregion

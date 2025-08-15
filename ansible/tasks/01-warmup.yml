@@ -1,0 +1,17 @@
+- name: Update package repositories
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  delay: 5
+
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+
+- name: Install required system packages
+  apt:
+    pkg: "{{ system_packages }}"
+    state: latest
+    update_cache: true
