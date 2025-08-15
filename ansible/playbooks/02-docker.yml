@@ -47,7 +47,7 @@
       community.docker.docker_network:
         name: "{{ docker_network }}"
         driver: "{{ docker_network_type }}"
-        internal: true # no external access
+        internal: false
 
     - name: Start and enable Docker service
       systemd:

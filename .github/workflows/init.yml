@@ -1,0 +1,78 @@
+name: Initialize Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable detailed & verbose output?'
+        required: false
+        default: false
+        type: boolean
+      target_env:
+        type: choice
+        description: "Select provisioning environment"
+        options:
+          - Dev
+          - Prod
+        default: Dev
+
+jobs:
+  provision:
+    name: Provision Remote Servers
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Build inventory from secret
+        working-directory: ./ansible
+        run: |
+          mkdir -p inventory
+          echo ${{ secrets.INVENTORY_YML }} > inventory/hosts.yml
+
+      - name: Test connectivity
+        working-directory: ./ansible
+        run: |
+          echo "Testing connectivity to target hosts..."
+          ansible all -m ping -i inventory/hosts.yml
+
+      - name: Start Provisioning
+        working-directory: ./ansible
+        run: ansible-playbook site.yml -i inventory/hosts.yml ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
+
+      - name: Cleanup files
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+          rm -f ./ansible/inventory/hosts.yml
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [provision]
+    if: always()
+
+    steps:
+      - name: Notification
+        run: |
+          if [ "${{ needs.provision.result }}" == "success" ]; then
+            echo "✅ VM provisioning completed successfully!"
+          elif [ "${{ needs.provision.result }}" == "failure" ]; then
+            echo "❌ VM provisioning failed!"
+            exit 1
+          elif [ "${{ needs.provision.result }}" == "skipped" ]; then
+            echo "⏭️ VM provisioning was skipped due to validation failure!"
+            exit 1
+          else
+            echo "⚠️ VM provisioning completed with unknown status: ${{ needs.provision.result }}"
+          fi
