@@ -49,7 +49,7 @@ jobs:
       - name: Start Provisioning
         working-directory: ./ansible
         run: ansible-playbook site.yml -i inventory/hosts.yml \
-          -e cf_cert="${{ secrets.CF_CERT }}" -e cf_key="${{ secrets.CF_KEY }}" \
+          -e "cf_cert=${{ secrets.CF_CERT }}" -e "cf_key=${{ secrets.CF_KEY }}" \
           ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
       - name: Cleanup files
