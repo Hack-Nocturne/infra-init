@@ -13,6 +13,7 @@ test_container_name: "docker-alpine-test"
 
 system_packages:
   - curl
+  - nginx
   - nftables
   - virtualenv
   - python3-pip

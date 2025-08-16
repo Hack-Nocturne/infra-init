@@ -3,12 +3,6 @@
     cf_cert_b64: "{{ lookup('file', 'cf_cert.pem') | b64encode }}"
     cf_key_b64:  "{{ lookup('file', 'cf_cert.key') | b64encode }}"
 
-- name: Install Nginx
-  apt:
-    name: nginx
-    state: present
-    update_cache: yes
-
 - name: Create SSL dir
   file:
     path: /etc/nginx/ssl
