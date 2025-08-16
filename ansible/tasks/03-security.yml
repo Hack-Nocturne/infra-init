@@ -63,10 +63,8 @@
         month: "*"
         weekday: "*"
         user: root
-        job: "{{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
+        job: "CRON_TZ=Asia/Kolkata {{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
         cron_file: cloudflare_ip_update
-        env:
-          CRON_TZ: "Asia/Kolkata"
 
     - name: Ensure cron service is running and enabled
       service:
