@@ -46,6 +46,12 @@ jobs:
           echo "Testing connectivity to target hosts..."
           ansible all -m ping -i inventory/hosts.yml
 
+      - name: Install ansible dependencies
+        working-directory: ./ansible
+        run: |
+          echo "Installing Ansible dependencies..."
+          ansible-galaxy collection install -r requirements.yml
+
       - name: Start Provisioning
         working-directory: ./ansible
         run: |
@@ -59,6 +65,8 @@ jobs:
         run: |
           rm -f ~/.ssh/id_rsa
           rm -f ./ansible/inventory/hosts.yml
+          rm -f ./ansible/cf_cert.pem
+          rm -f ./ansible/cf_cert.key
 
   notify:
     name: Send Notification

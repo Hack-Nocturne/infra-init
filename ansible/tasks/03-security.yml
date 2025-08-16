@@ -54,16 +54,16 @@
 
 - name: Setup CRON job for IP updates
   block:
-    - name: Run cron at 2:30 AM IST every day
+    - name: Run cron every 6 hours
       cron:
         name: "Update Cloudflare IPs"
-        minute: "30"
-        hour: "2"
+        minute: "0"
+        hour: "*/6"
         day: "*"
         month: "*"
         weekday: "*"
         user: root
-        job: "CRON_TZ=Asia/Kolkata {{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
+        job: "{{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
         cron_file: cloudflare_ip_update
 
     - name: Ensure cron service is running and enabled
@@ -78,6 +78,24 @@
     chdir: "{{ cron_script_dir }}"
   register: script_output
   failed_when: script_output.rc != 0
+
+- name: Ensure docker service is restarted with nftables
+  block:
+    - name: Create systemd drop-in directory for nftables
+      file:
+        path: "/etc/systemd/system/nftables.service.d"
+        state: directory
+
+    - name: Add override to nftables service
+      copy:
+        dest: "/etc/systemd/system/nftables.service.d/override.conf"
+        content: |
+          [Service]
+          ExecReload=/bin/systemctl restart docker.service
+          ExecStartPost=/bin/systemctl restart docker.service
+
+    - name: Reload systemd to pick up overrides
+      command: systemctl daemon-reload
 
 - name: Enable nftables service
   systemd:
