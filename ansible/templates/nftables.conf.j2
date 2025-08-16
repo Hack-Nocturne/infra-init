@@ -1,0 +1,41 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+  sets {
+    cloudflare_v4 {
+      type ipv4_addr
+      flags interval
+      elements = { {{ cf_ipv4 | join(', ') }} }
+    }
+
+    cloudflare_v6 {
+      type ipv6_addr
+      flags interval
+      elements = { {{ cf_ipv6 | join(', ') }} }
+    }
+  }
+
+  chains {
+    input {
+      type filter hook input priority 0;
+
+      # Allow loopback
+      iif lo accept
+
+      # Allow established/related
+      ct state established,related accept
+
+      # Allow SSH from anywhere
+      tcp dport 22 accept
+
+      # Allow Cloudflare HTTP/HTTPS
+      ip saddr @cloudflare_v4 tcp dport {80, 443} accept
+      ip6 saddr @cloudflare_v6 tcp dport {80, 443} accept
+
+      # Drop everything else
+      counter drop
+    }
+  }
+}

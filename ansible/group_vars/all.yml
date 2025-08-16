@@ -13,12 +13,20 @@ test_container_name: "docker-alpine-test"
 
 system_packages:
   - curl
+  - nftables
   - virtualenv
   - python3-pip
+  - python3-venv
   - ca-certificates
   - python3-setuptools
   - apt-transport-https
   - software-properties-common
+
+# endregion
+
+# region Security Variables
+
+cron_script_dir: "/etc/cron.d"
 
 # endregion
 

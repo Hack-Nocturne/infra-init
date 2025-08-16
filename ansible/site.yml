@@ -5,4 +5,5 @@
   tasks:
     - import_tasks: tasks/01-warmup.yml
     - import_tasks: tasks/02-docker.yml
-    - import_tasks: tasks/03-nginx.yml
+    - import_tasks: tasks/03-security.yml
+    - import_tasks: tasks/04-nginx.yml

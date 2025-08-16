@@ -1,0 +1,9 @@
+# Cloudflare IPv4
+{% for ip in cf_ipv4 %}
+set_real_ip_from {{ ip }};
+{% endfor %}
+
+# Cloudflare IPv6
+{% for ip in cf_ipv6 %}
+set_real_ip_from {{ ip }};
+{% endfor %}

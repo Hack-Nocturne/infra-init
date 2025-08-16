@@ -53,27 +53,10 @@
         group: root
         mode: '0644'
 
-- name: Get Cloudflare trusted ips list
-  block:
-    - name: Fetch Cloudflare IPv4 list
-      uri:
-        url: https://www.cloudflare.com/ips-v4
-        return_content: yes
-      register: cf_ipv4
-
-    - name: Fetch Cloudflare IPv6 list
-      uri:
-        url: https://www.cloudflare.com/ips-v6
-        return_content: yes
-      register: cf_ipv6
-
 - name: Render Nginx config (blue/green aware with Cloudflare IPs)
   template:
     src: templates/nginx.conf.j2
     dest: /etc/nginx/nginx.conf
-  vars:
-    cloudflare_ipv4: "{{ cf_ipv4.content.splitlines() }}"
-    cloudflare_ipv6: "{{ cf_ipv6.content.splitlines() }}"
 
 - name: Validate and reload Nginx
   block:
