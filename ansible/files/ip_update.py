@@ -83,6 +83,9 @@ def main():
         "cf_ipv6": ipv6
       }
 
+      nginx_dir = os.path.dirname(NGINX_CFIP_CONF_PATH)
+      os.makedirs(nginx_dir, exist_ok=True)
+
       nginx_rendered = render_template(NGINX_CF_IPS_TEMPLATE, render_context)
       nftable_rendered = render_template(NFTABLE_TEMPLATE, render_context)
 
