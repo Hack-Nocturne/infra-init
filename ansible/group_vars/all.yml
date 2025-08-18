@@ -9,6 +9,8 @@ test_container_name: "podman-alpine-test"
 # region Warmup Variables
 
 system_packages:
+  - acl
+  - htop
   - curl
   - nginx
   - podman
