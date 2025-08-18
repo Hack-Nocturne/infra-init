@@ -92,8 +92,8 @@
     state: present
     key: "{{ item.key }}"
   loop:
-    - { user: "{{ admin_user }}", key: "{{ admin_ssh_pub_key }}" }
-    - { user: "{{ deploy_user }}", key: "{{ deploy_ssh_pub_key }}" }
+    - { user: "{{ admin_user }}", key: "{{ lookup('file', admin.pub) }}" }
+    - { user: "{{ deploy_user }}", key: "{{ lookup('file', deploy.pub) }}" }
 
 - name: Backup existing sshd_config
   copy:
