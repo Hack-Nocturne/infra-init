@@ -57,17 +57,20 @@ jobs:
         run: |
           echo "Installing Ansible dependencies..."
           ansible-galaxy collection install -r requirements.yml
-          sudo apt install python3-passlib
 
       - name: Start Provisioning
         working-directory: ./ansible
         run: |
           echo "${{ secrets.CF_CERT }}" > cf_cert.pem
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
+          
+          deploy_pwd_hashed=$(printf "%s" "${{ secrets.DEPLOY_PWD }}" | sha512sum | awk '{print $1}')
+          admin_pwd_hashed=$(printf "%s" "${{ secrets.ADMIN_PWD }}" | sha512sum | awk '{print $1}')
+
           ansible-playbook site.yml -i inventory/hosts.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
-            -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
-            -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
+            -e "deploy_pwd_hashed=${deploy_pwd_hashed}" \
+            -e "admin_pwd_hashed=${admin_pwd_hashed}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
       - name: Cleanup files

@@ -39,12 +39,12 @@
     name: "{{ item.name }}"
     shell: "{{ item.shell }}"
     groups: "{{ item.groups }}"
-    password: "{{ item.password | password_hash('sha512') }}"
+    password: "{{ item.password }}"
     append: yes
     create_home: yes
   loop:
-    - { name: "{{ admin_user }}", groups: "sudo", shell: "/bin/bash", password: "{{ admin_pwd }}" }
-    - { name: "{{ deploy_user }}", groups: "{{ deploy_group }}", shell: "{{ obscured_dir }}/rbash.sh", password: "{{ deploy_pwd }}" }
+    - { name: "{{ admin_user }}", groups: "sudo", shell: "/bin/bash", password: "{{ admin_pwd_hashed }}" }
+    - { name: "{{ deploy_user }}", groups: "{{ deploy_group }}", shell: "{{ obscured_dir }}/rbash.sh", password: "{{ deploy_pwd_hashed }}" }
 
 - name: Ensure subuid & subgid mapping exists
   lineinfile:
