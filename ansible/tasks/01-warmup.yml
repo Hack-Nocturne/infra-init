@@ -15,3 +15,84 @@
     pkg: "{{ system_packages }}"
     state: latest
     update_cache: true
+
+- name: Prepare script, dependencies & Python environment
+  block:
+    - name: Ensure script directory exists
+      file:
+        path: "{{ cron_script_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy Python script
+      copy:
+        src: "files/ip_update.py"
+        dest: "{{ cron_script_dir }}/ip_update.py"
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Copy template files
+      copy:
+        src: "templates/{{ item }}"
+        dest: "{{ cron_script_dir }}/{{ item }}"
+        mode: '0644'
+        owner: root
+        group: root
+      loop:
+        - nftables.conf.j2
+        - cf_ips.conf.j2
+
+    - name: Create requirements.txt
+      copy:
+        content: |
+          requests>=2.32.4
+          Jinja2>=3.1.6
+        dest: "{{ cron_script_dir }}/requirements.txt"
+        mode: '0644'
+
+    - name: Create Python virtual environment
+      pip:
+        requirements: "{{ cron_script_dir }}/requirements.txt"
+        virtualenv: "{{ cron_script_dir }}/venv"
+        virtualenv_command: python3 -m venv
+
+    - name: Create wrapper script for cron
+      copy:
+        content: |
+          #!/bin/bash
+
+          cd {{ cron_script_dir }} # Set working directory
+          source {{ cron_script_dir }}/venv/bin/activate # activate venv
+          python3 {{ cron_script_dir }}/ip_update.py # fire the py-script
+        dest: "{{ cron_script_dir }}/run_ip_update.sh"
+        mode: '0755'
+        owner: root
+        group: root
+
+- name: Setup CRON job for IP updates
+  block:
+    - name: Run cron every 6 hours
+      cron:
+        name: "Update Cloudflare IPs"
+        minute: "0"
+        hour: "*/6"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        user: root
+        job: "{{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
+        cron_file: cloudflare_ip_update
+
+    - name: Ensure cron service is running and enabled
+      service:
+        name: cron
+        state: started
+        enabled: yes
+
+- name: Run IP update script immediately
+  command: "{{ cron_script_dir }}/run_ip_update.sh"
+  args:
+    chdir: "{{ cron_script_dir }}"
+  register: script_output
+  failed_when: script_output.rc != 0

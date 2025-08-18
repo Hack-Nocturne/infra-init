@@ -1,0 +1,19 @@
+- name: Ensure podman system service is running
+  systemd:
+    name: podman
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Pull alpine image via Podman
+  containers.podman.podman_image:
+    name: "{{ test_image }}"
+    state: present
+    pull: true
+
+- name: Create and start alpine container via Podman
+  containers.podman.podman_container:
+    name: "{{ test_container_name }}"
+    image: "{{ test_image }}"
+    command: "{{ test_command }}"
+    state: started

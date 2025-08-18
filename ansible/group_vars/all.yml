@@ -1,11 +1,8 @@
-# region Docker Variables
-
-docker_network: "app-internal-nw"
-docker_network_type: "bridge"
+# region Podman Variables
 
 test_image: "alpine"
 test_command: "sleep 30d"
-test_container_name: "docker-alpine-test"
+test_container_name: "podman-alpine-test"
 
 # endregion
 
@@ -14,10 +11,12 @@ test_container_name: "docker-alpine-test"
 system_packages:
   - curl
   - nginx
+  - podman
   - nftables
   - virtualenv
   - python3-pip
   - python3-venv
+  - python3-podman
   - ca-certificates
   - python3-setuptools
   - apt-transport-https
@@ -28,6 +27,13 @@ system_packages:
 # region Security Variables
 
 cron_script_dir: "/etc/cron.d"
+deploy_user: "deployer"
+deploy_group: "deploy"
+admin_user: "admin"
+ssh_port: "6824"
+
+restricted_dirs:
+  - "/etc/nginx/ssl"
 
 # endregion
 

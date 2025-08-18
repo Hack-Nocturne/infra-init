@@ -1,105 +1,137 @@
-- name: Prepare script, dependencies & Python environment
-  block:
-    - name: Ensure script directory exists
-      file:
-        path: "{{ cron_script_dir }}"
-        state: directory
-        mode: '0755'
-
-    - name: Copy Python script
-      copy:
-        src: "files/ip_update.py"
-        dest: "{{ cron_script_dir }}/ip_update.py"
-        mode: '0755'
-        owner: root
-        group: root
-
-    - name: Copy template files
-      copy:
-        src: "templates/{{ item }}"
-        dest: "{{ cron_script_dir }}/{{ item }}"
-        mode: '0644'
-        owner: root
-        group: root
-      loop:
-        - nftables.conf.j2
-        - cf_ips.conf.j2
-
-    - name: Create requirements.txt
-      copy:
-        content: |
-          requests>=2.32.4
-          Jinja2>=3.1.6
-        dest: "{{ cron_script_dir }}/requirements.txt"
-        mode: '0644'
-
-    - name: Create Python virtual environment
-      pip:
-        requirements: "{{ cron_script_dir }}/requirements.txt"
-        virtualenv: "{{ cron_script_dir }}/venv"
-        virtualenv_command: python3 -m venv
-
-    - name: Create wrapper script for cron
-      copy:
-        content: |
-          #!/bin/bash
-
-          cd {{ cron_script_dir }} # Set working directory
-          source {{ cron_script_dir }}/venv/bin/activate # activate venv
-          python3 {{ cron_script_dir }}/ip_update.py # fire the py-script
-        dest: "{{ cron_script_dir }}/run_ip_update.sh"
-        mode: '0755'
-        owner: root
-        group: root
-
-- name: Setup CRON job for IP updates
-  block:
-    - name: Run cron every 6 hours
-      cron:
-        name: "Update Cloudflare IPs"
-        minute: "0"
-        hour: "*/6"
-        day: "*"
-        month: "*"
-        weekday: "*"
-        user: root
-        job: "{{ cron_script_dir }}/run_ip_update.sh > /dev/null 2>&1"
-        cron_file: cloudflare_ip_update
-
-    - name: Ensure cron service is running and enabled
-      service:
-        name: cron
-        state: started
-        enabled: yes
-
-- name: Run IP update script immediately
-  command: "{{ cron_script_dir }}/run_ip_update.sh"
-  args:
-    chdir: "{{ cron_script_dir }}"
-  register: script_output
-  failed_when: script_output.rc != 0
-
-- name: Ensure docker service is restarted with nftables
-  block:
-    - name: Create systemd drop-in directory for nftables
-      file:
-        path: "/etc/systemd/system/nftables.service.d"
-        state: directory
-
-    - name: Add override to nftables service
-      copy:
-        dest: "/etc/systemd/system/nftables.service.d/override.conf"
-        content: |
-          [Service]
-          ExecReload=/bin/systemctl restart docker.service
-          ExecStartPost=/bin/systemctl restart docker.service
-
-    - name: Reload systemd to pick up overrides
-      command: systemctl daemon-reload
-
 - name: Enable nftables service
   systemd:
     name: nftables
     enabled: yes
     state: started
     daemon_reload: yes
+
+- name: Ensure obscured directory exists
+  file:
+    path: "{{ obscured_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Copy deploy script
+  copy:
+    src: "files/deploy.sh"
+    dest: "{{ obscured_dir }}/deploy.sh"
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Copy rbash.sh script
+  copy:
+    src: "files/rbash.sh"
+    dest: "{{ obscured_dir }}/rbash.sh"
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create a non-privileged user group
+  group:
+    name: "{{ deploy_group }}"
+    state: present
+
+- name: Ensure users exist
+  user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+    groups: "{{ item.groups }}"
+    append: yes
+    create_home: yes
+  loop:
+    - { name: "{{ admin_user }}", groups: "sudo", shell: "/bin/bash" }
+    - { name: "{{ deploy_user }}", groups: "{{ deploy_group }}", shell: "{{ obscured_dir }}/rbash.sh" }
+
+- name: Configure sudoers for restricted access
+  copy:
+    dest: "/etc/sudoers.d/{{ deploy_group }}"
+    owner: root
+    group: root
+    mode: '0440'
+    content: |
+      # Sudoers configuration for {{ deploy_group }}
+
+      # Allow specific binaries with NOPASSWD
+      %{{ deploy_group }} ALL=(ALL) NOPASSWD:
+        /usr/bin/tee /etc/nginx/conf.d/active_color.conf,
+        /usr/sbin/nginx -s reload
+
+      # Prevent privilege escalation
+      Defaults:{{ deploy_group }} !visiblepw
+      Defaults:{{ deploy_group }} always_set_home
+      Defaults:{{ deploy_group }} match_group_by_gid
+      Defaults:{{ deploy_group }} always_query_group_plugin
+      Defaults:{{ deploy_group }} env_reset
+      Defaults:{{ deploy_group }} secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+- name: Ensure restricted directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ restricted_dirs }}"
+
+- name: Remove access to sensitive directories
+  acl:
+    path: "{{ item }}"
+    entity: "{{ deploy_group }}"
+    etype: group
+    permissions: "---"
+    recursive: yes
+    state: present
+  loop: "{{ restricted_dirs }}"
+
+- name: Set ssh keys for users
+  authorized_key:
+    user: "{{ item.user }}"
+    state: present
+    key: "{{ item.key }}"
+  loop:
+    - { user: "{{ admin_user }}", key: "{{ admin_ssh_pub_key }}" }
+    - { user: "{{ deploy_user }}", key: "{{ deploy_ssh_pub_key }}" }
+
+- name: Backup existing sshd_config
+  copy:
+    src: /etc/ssh/sshd_config
+    dest: /etc/ssh/sshd_config.backup
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Apply strict sshd_config
+  copy:
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      Port {{ ssh_port }}
+      Protocol 2
+      PermitRootLogin no
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+      KbdInteractiveAuthentication no
+      PermitEmptyPasswords no
+      PubkeyAuthentication yes
+
+      X11Forwarding no
+      AllowTcpForwarding no
+      PermitTunnel no
+
+      LoginGraceTime 20
+      MaxAuthTries 3
+      MaxSessions 5
+
+      Match Group {{ deploy_group }}
+        ForceCommand {{ obscured_dir }}/rbash.sh
+
+- name: Restart SSH service
+  service:
+    name: ssh
+    state: restarted
