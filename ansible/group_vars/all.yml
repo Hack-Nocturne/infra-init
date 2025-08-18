@@ -32,7 +32,7 @@ cron_script_dir: "/etc/cron.d"
 deploy_user: "deployer"
 deploy_group: "deploy"
 admin_user: "admin"
-ssh_port: "6824"
+ssh_port: 6824
 
 restricted_dirs:
   - "/etc/nginx/ssl"
