@@ -64,8 +64,8 @@ jobs:
           echo "${{ secrets.CF_CERT }}" > cf_cert.pem
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
           
-          deploy_pwd_hashed=$(printf "%s" "${{ secrets.DEPLOY_PWD }}" | sha512sum | awk '{print $1}')
-          admin_pwd_hashed=$(printf "%s" "${{ secrets.ADMIN_PWD }}" | sha512sum | awk '{print $1}')
+          deploy_pwd_hashed=$(openssl passwd -6 "${{ secrets.DEPLOY_PWD }}")
+          admin_pwd_hashed=$(openssl passwd -6 "${{ secrets.ADMIN_PWD }}")
 
           ansible-playbook site.yml -i inventory/hosts.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
