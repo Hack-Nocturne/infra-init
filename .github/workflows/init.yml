@@ -57,6 +57,7 @@ jobs:
         run: |
           echo "Installing Ansible dependencies..."
           ansible-galaxy collection install -r requirements.yml
+          pipx inject ansible passlib
 
       - name: Start Provisioning
         working-directory: ./ansible
