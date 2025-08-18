@@ -65,6 +65,8 @@ jobs:
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
           ansible-playbook site.yml -i inventory/hosts.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
+            -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
+            -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
       - name: Cleanup files
