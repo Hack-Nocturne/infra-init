@@ -7,3 +7,6 @@
     - import_tasks: tasks/02-podman.yml
     - import_tasks: tasks/03-security.yml
     - import_tasks: tasks/04-nginx.yml
+
+    - name: Reboot the hosts
+      reboot:
