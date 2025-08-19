@@ -50,7 +50,7 @@ jobs:
         working-directory: ./ansible
         run: |
           echo "Testing connectivity to target hosts..."
-          ansible all -m ping -i inventory/hosts.yml
+          ansible all -m ping
 
       - name: Install ansible dependencies
         working-directory: ./ansible
@@ -67,11 +67,16 @@ jobs:
           deploy_pwd_hashed=$(openssl passwd -6 "${{ secrets.DEPLOY_PWD }}")
           admin_pwd_hashed=$(openssl passwd -6 "${{ secrets.ADMIN_PWD }}")
 
-          ansible-playbook site.yml -i inventory/hosts.yml \
+          ansible-playbook site.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
             -e "deploy_pwd_hashed=${deploy_pwd_hashed}" \
             -e "admin_pwd_hashed=${admin_pwd_hashed}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
+
+      - name: Ping new ssh port
+        run: |
+          echo "Pinging SSH port to verify connectivity..."
+          ansible all -m ping -e "ansible_ssh_port=6824" -e "ansible_port=6824"
 
       - name: Cleanup files
         if: always()

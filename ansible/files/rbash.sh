@@ -5,6 +5,11 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 CMD="$SSH_ORIGINAL_COMMAND"
 HOME_DIR="/home/$(whoami)"
 
+case ":$PATH:" in
+  *":$SCRIPT_DIR:"*) ;; # already in PATH, do nothing
+  *) export PATH="$SCRIPT_DIR:$PATH" ;;
+esac
+
 shopt -u cdable_vars
 shopt -u sourcepath
 shopt -u dotglob
@@ -77,7 +82,7 @@ GLOBAL_BLOCKED_COMMANDS=(
   'bash'
   'zsh'
   'awk'
-  'sh'
+  '^sh'
 
   'shopt'
   'bind'

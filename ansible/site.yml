@@ -15,19 +15,6 @@
             reboot_timeout: 10
           ignore_errors: yes
 
-        - name: Update ansible_port for subsequent connections
-          set_fact:
-            ansible_port: "{{ ssh_port }}"
-            ansible_ssh_port: "{{ ssh_port }}"
-
         - name: Pause for reboot to take effect
           pause:
             seconds: 30
-
-        - name: Wait for SSH to be available on custom port
-          wait_for:
-            host: "{{ (ansible_ssh_host | default(ansible_host)) | default(inventory_hostname) }}"
-            port: "{{ ssh_port }}"
-            timeout: 60
-            delay: 10
-            state: started
