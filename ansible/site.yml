@@ -8,5 +8,18 @@
     - import_tasks: tasks/03-security.yml
     - import_tasks: tasks/04-nginx.yml
 
-    - name: Reboot the hosts
-      reboot:
+    - name: Reboot and Verify SSH on Custom port
+      block:
+        - name: Reboot the hosts
+          reboot:
+            reboot_timeout: 10
+          ignore_errors: yes
+
+        - name: Wait for SSH to be available on custom port
+          wait_for:
+            host: "{{ (ansible_ssh_host | default(ansible_host)) | default(inventory_hostname) }}"
+            port: "{{ ssh_port }}"
+            timeout: 60
+            sleep: 10
+            delay: 30
+            state: started
