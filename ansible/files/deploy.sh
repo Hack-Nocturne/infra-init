@@ -57,10 +57,13 @@ elif [[ -z "$APP_NAME" ]]; then
   usage
 fi
 
-# --- 2. Prepare Constants ---
+# --- 2. Prepare Constants & ENV ---
 IMAGE="ghcr.io/hack-nocturne/$APP_NAME:$VERSION"
 CONF_FILE="/etc/nginx/conf.d/active_color.conf"
 ENV_FILE="$HOME/.config/$APP_NAME.env"
+
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 
 # --- 3. First thing first [Secure the ENV] ---
 declare -a SECRET_NAMES=()

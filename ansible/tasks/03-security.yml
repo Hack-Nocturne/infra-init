@@ -69,7 +69,7 @@
       # Sudoers configuration for {{ deploy_group }}
 
       # Allow specific binaries with NOPASSWD
-      %{{ deploy_group }} ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/nginx/conf.d/active_color.conf, /usr/sbin/nginx -s reload
+      %{{ deploy_group }} ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/nginx/conf.d/active_color.conf, /usr/sbin/nginx -s reload, /usr/sbin/usermod --shell {{ obscured_dir }}/rbash.sh {{ deploy_user }}
 
       # Prevent privilege escalation
       Defaults:{{ deploy_group }} !visiblepw
@@ -139,9 +139,6 @@
       LoginGraceTime 20
       MaxAuthTries 3
       MaxSessions 5
-
-      Match Group {{ deploy_group }}
-        ForceCommand {{ obscured_dir }}/rbash.sh
 
 - name: Restart SSH service
   service:
