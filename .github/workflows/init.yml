@@ -74,6 +74,7 @@ jobs:
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
       - name: Ping new ssh port
+        working-directory: ./ansible
         run: |
           echo "Pinging SSH port to verify connectivity..."
           ansible all -m ping -e "ansible_ssh_port=6824" -e "ansible_port=6824"

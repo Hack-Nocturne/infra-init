@@ -168,15 +168,15 @@ if [[ ${#SECRET_NAMES[@]} -gt 0 ]]; then
   done
 fi
 
-tee "$target_dir/$container@.container" > /dev/null <<EOF
+tee "$target_dir/$target.container" > /dev/null <<EOF
 [Unit]
-Description=$APP_NAME container for $new_color deployment on port %i
+Description=$APP_NAME container for $new_color deployment on port $deploy_port
 Wants=network-online.target
 After=network-online.target
 
 [Container]
 PublishPort=127.0.0.1:$deploy_port:$APP_PORT
-ContainerName=${container}-%i
+ContainerName=${container}-$deploy_port
 NoNewPrivileges=true
 DropCapability=all
 ReadOnly=true
