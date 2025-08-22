@@ -23,8 +23,10 @@ safe_echo() {
   echo "${msg//$SCRIPT_DIR/...}"
 }
 
-# --- Global and contextual blocked commands ---
-GLOBAL_BLOCKED_COMMANDS=(
+# --- Global and contextual blocked patterns ---
+GLOBAL_BLOCKED_PATTERN=(
+  '.local/share/containers/storage' # < Path to Podman storage, block all commands accessing it
+
   '^podman container inspect'
   '^podman network inspect'
   '^podman volume inspect'
@@ -92,7 +94,7 @@ GLOBAL_BLOCKED_COMMANDS=(
 )
 
 # === Commands blocked outside home dir ===
-CONTEXT_BLOCKED_COMMANDS=(ls cd cat nano vim less more tail)
+CONTEXT_BLOCKED_PATTERN=(ls cd cat nano vim less more tail)
 
 in_home_dir() {
   [[ "$(realpath "$PWD")" == "$HOME_DIR"* ]]
@@ -115,7 +117,7 @@ block_global() {
   fi
   
   # Check against blocked patterns
-  for pattern in "${GLOBAL_BLOCKED_COMMANDS[@]}"; do
+  for pattern in "${GLOBAL_BLOCKED_PATTERN[@]}"; do
     if [[ "$normalized_cmd" == $pattern* ]] || [[ "$cmd" == $pattern* ]]; then
       safe_echo "❌ Command '$cmd' is globally blocked."
       return 1
@@ -143,7 +145,7 @@ block_context() {
   fi
 
   # Check if this is a contextual command
-  for forbidden in "${CONTEXT_BLOCKED_COMMANDS[@]}"; do
+  for forbidden in "${CONTEXT_BLOCKED_PATTERN[@]}"; do
     if [[ "$base_cmd_name" == "$forbidden" ]]; then
       # Block if command itself is called with absolute path
       if [[ "$cmd_name" == /* ]]; then

@@ -22,6 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_env }}
     
+    defaults:
+      run:
+        shell: bash
+        working-directory: ansible
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -37,29 +42,25 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          echo "$DEPLOY_SSH_PUB_KEY" > ansible/deploy.pub
-          echo "$ADMIN_SSH_PUB_KEY" > ansible/admin.pub
+          echo "$DEPLOY_SSH_PUB_KEY" > deploy.pub
+          echo "$ADMIN_SSH_PUB_KEY" > admin.pub
 
       - name: Build inventory from secret
-        working-directory: ./ansible
         run: |
           mkdir -p inventory
           echo "${{ secrets.INVENTORY_YML }}" > inventory/hosts.yml
 
       - name: Test connectivity
-        working-directory: ./ansible
         run: |
           echo "Testing connectivity to target hosts..."
           ansible all -m ping
 
       - name: Install ansible dependencies
-        working-directory: ./ansible
         run: |
           echo "Installing Ansible dependencies..."
           ansible-galaxy collection install -r requirements.yml
 
       - name: Start Provisioning
-        working-directory: ./ansible
         run: |
           echo "${{ secrets.CF_CERT }}" > cf_cert.pem
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
@@ -73,19 +74,13 @@ jobs:
             -e "admin_pwd_hashed=${admin_pwd_hashed}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
-      - name: Ping new ssh port
-        working-directory: ./ansible
-        run: |
-          echo "Pinging SSH port to verify connectivity..."
-          ansible all -m ping -e "ansible_ssh_port=6824" -e "ansible_port=6824"
-
       - name: Cleanup files
         if: always()
         run: |
           rm -f ~/.ssh/id_rsa
-          rm -f ./ansible/cf_cert.pem
-          rm -f ./ansible/cf_cert.key
-          rm -f ./ansible/inventory/hosts.yml
+          rm -f ./cf_cert.pem
+          rm -f ./cf_cert.key
+          rm -f ./inventory/hosts.yml
 
   notify:
     name: Send Notification

@@ -18,3 +18,17 @@
         - name: Pause for reboot to take effect
           pause:
             seconds: 30
+
+        - name: Change default Port and User to test
+          set_fact:
+            ansible_user: "{{ deploy_user }}"
+            ansible_ssh_port: "{{ ssh_port }}"
+            ansible_port: "{{ ssh_port }}"
+
+        - name: Verify SSH connectivity on custom port
+          wait_for:
+            host: "{{ (ansible_ssh_host | default(ansible_host)) | default(inventory_hostname) }}"
+            port: "{{ ssh_port }}"
+            delay: 10
+            timeout: 30
+            state: started

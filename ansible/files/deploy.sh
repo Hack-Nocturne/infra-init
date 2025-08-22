@@ -141,12 +141,11 @@ if [[ "$RETRIEVE" == "true" ]]; then
 fi
 
 target="${container}-${deploy_port}"
-sysd_target="${container}@${deploy_port}"
 systemctl --user enable podman-auto-update.service podman-auto-update.timer --now
 
 # --- 8. Stop old container silently ---
 if podman ps -a --format '{{.Names}}' | grep -wq "$target"; then
-  systemctl --user stop $sysd_target
+  systemctl --user stop $target
   echo "✅ Stopped old container: $target"
   sleep 2s
 else
@@ -193,7 +192,7 @@ EOF
 
 # --- 10. Start the new Quadlet ---
 systemctl --user daemon-reload
-systemctl --user start $sysd_target
+systemctl --user start $target
 
 echo "✅ Application '$APP_NAME:$VERSION' is now live for '$new_color' deployment (container: $target)"
 echo "👟 Use '$0 -a $APP_NAME -f true' to switch traffic to this deployment"
