@@ -88,6 +88,19 @@ Use the [`deploy.sh`](ansible/files/deploy.sh) script for blue-green deployments
 ./deploy.sh -a myapp -f true
 ```
 
+## 🏗️ Terraform IaC
+- **Cloud Provisioning**: Automated cloud infrastructure provisioning
+- **Multi-Cloud Support**: Resource provisioning across DigitalOcean & Cloudflare
+- **State Management**: Cloudflare R2 for S3 based state backend
+
+### Steps
+1. **Configure Variables**: Copy `terraform\(dev,prod).auto.tfvars.example` to create your environment-specific variable files (e.g., `dev.auto.tfvars` or `prod.auto.tfvars`).
+2. **Configure Backend**: Copy `terraform\backend-env.(ps1,sh).example` to either `terraform\backend-env.ps1` or `terraform\backend-env.sh` and run specified commands to set up your backend configuration for state management.
+3. **Initialize Terraform**: Run `terraform init` to initialize the working directory.
+4. **Plan Changes**: Execute `terraform plan` to preview changes before applying.
+5. **Apply Changes**: Use `terraform apply` to create or update infrastructure.
+6. **Manage State**: Rely on Cloudflare R2 for storing and managing Terraform state files.
+
 ## 🛡️ Security Features
 
 ### Network Security
@@ -141,11 +154,6 @@ Use the [`deploy.sh`](ansible/files/deploy.sh) script for blue-green deployments
 - **Session Management**: Distributed session storage for scalable applications
 - **Rate Limiting**: Advanced rate limiting and throttling capabilities
 
-### 🏗️ Terraform Infrastructure as Code
-- **Cloud Provisioning**: Automated cloud infrastructure provisioning
-- **Multi-Cloud Support**: AWS, GCP, Azure infrastructure management
-- **State Management**: Centralized Terraform state management and planning
-
 ### 📊 Enhanced Monitoring
 - **Metrics Collection**: Prometheus/Grafana integration for comprehensive monitoring
 - **Alerting**: Automated alerting for security events and system issues
@@ -191,4 +199,4 @@ See the full license terms in the [LICENSE](LICENSE) file.
 
 ---
 
-**⚡ Powered by Ansible, Podman, Cloudflare & Terraform (WIP)**
+**⚡ Powered by Ansible, Podman, Cloudflare & Terraform**
