@@ -1,1 +1,9 @@
-secrets
+.terraform/
+secrets/
+.metas/
+
+*.tfvars
+*.tfstate
+*.lock.hcl
+*.lock.info
+*.tfstate.backup

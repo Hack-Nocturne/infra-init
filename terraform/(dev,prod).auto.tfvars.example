@@ -1,0 +1,12 @@
+# Rename this file to ether 'dev.auto.tfvars' or 'prod.auto.tfvars'
+
+do_config = {
+  # Required parameters
+  api_token        = "do_secret_api_token"
+  pub_ssh_key_file = "path/to/ssh_key.pub"
+
+  # Optional parameters
+  # region = "blr1"
+  # size   = "s-1vcpu-1gb"
+  # image  = "ubuntu-25-04-x64"
+}
