@@ -1,0 +1,17 @@
+# region Powershell (Windows) config | File name: backend-env.ps1
+
+$env:AWS_ACCESS_KEY_ID="your-AWS_ACCESS_KEY_ID"
+$env:AWS_SECRET_ACCESS_KEY="your-AWS_SECRET_ACCESS_KEY"
+
+# endregion
+
+# region Bash (Unix) config | File name: backend-env.sh
+
+export AWS_ACCESS_KEY_ID="your-AWS_ACCESS_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="your-AWS_SECRET_ACCESS_KEY"
+
+# endregion
+
+# Note: before running any terraform commands, source the appropriate file for your OS
+# Windows: . .\backend-env.ps1
+# Unix: source ./backend-env.sh

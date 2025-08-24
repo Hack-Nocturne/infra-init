@@ -7,3 +7,6 @@ secrets/
 *.lock.hcl
 *.lock.info
 *.tfstate.backup
+
+backend-env.*
+!backend-env.(ps1,sh).example
