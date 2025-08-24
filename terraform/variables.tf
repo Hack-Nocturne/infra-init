@@ -7,3 +7,11 @@ variable "do_config" {
     image            = optional(string, "ubuntu-25-04-x64")
   })
 }
+
+variable "cf_config" {
+  type = object({
+    api_token = string
+    zone_id   = string
+    is_dev    = optional(bool, true)
+  })
+}

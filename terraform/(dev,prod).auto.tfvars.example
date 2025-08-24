@@ -10,3 +10,12 @@ do_config = {
   # size   = "s-1vcpu-1gb"
   # image  = "ubuntu-25-04-x64"
 }
+
+cf_config = {
+  # Required parameters
+  api_token = "cf_secret_api_token"
+  zone_id   = "cf_zone_id_of_domain"
+
+  # Optional parameters
+  # is_dev = true
+}
