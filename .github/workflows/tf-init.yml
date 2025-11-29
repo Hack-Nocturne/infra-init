@@ -13,6 +13,14 @@ permissions:
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  
+  # Azure Credentials (for Azure Resources)
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  WORKING_DIR: ./terraform
 
 defaults:
   run:
@@ -29,6 +37,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Create TF Deps
+        run: |
+          echo "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          echo "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -78,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: tfplan-artifact
-          path: tfplan
+          path: ${{ env.WORKING_DIR }}/tfplan
           retention-days: 4
 
       - name: Check Plan Status
@@ -95,6 +108,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Create TF Deps
+        run: |
+          echo "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          echo "${{ secrets.SSH_PUB_KEY }}" > key.pub
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -110,7 +128,7 @@ jobs:
           workflow: tf-init.yml
           pr: ${{ github.event.pull_request.number }}
           name: tfplan-artifact
-          path: ./
+          path: ${{ env.WORKING_DIR }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
