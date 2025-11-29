@@ -40,7 +40,7 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
           printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
@@ -64,7 +64,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const plan = fs.readFileSync('plan.txt', 'utf8');
+            const plan = fs.readFileSync('${{ env.WORKING_DIR }}/plan.txt', 'utf8');
             // Truncate if too long for GitHub comment limit
             const maxLen = 65000;
             const planOutput = plan.length > maxLen ? plan.substring(0, maxLen) + "...(truncated)" : plan;
@@ -110,7 +110,7 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
           printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
