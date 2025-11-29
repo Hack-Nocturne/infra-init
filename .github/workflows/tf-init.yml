@@ -40,7 +40,7 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
           printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
@@ -110,7 +110,7 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
           printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
