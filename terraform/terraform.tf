@@ -15,4 +15,25 @@ terraform {
 
     endpoints = { s3 = "https://4b612799ee232923f8e7025f0f8af8ff.r2.cloudflarestorage.com" }
   }
+
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.60.0"
+    }
+
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "4.54.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+  subscription_id = var.az_config.subscription_id
+}
+
+provider "digitalocean" {
+  token = var.do_config.api_token
 }
