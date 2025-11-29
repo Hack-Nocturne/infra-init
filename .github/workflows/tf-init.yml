@@ -1,0 +1,116 @@
+name: Terraform Lifecycle
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+  pull-requests: write # Required to post comments
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+defaults:
+  run:
+    working-directory: ./terraform
+    shell: bash
+
+jobs:
+  # JOB 1: PLAN
+  # Runs on PR Open/Update. It Generates Plan, Comments, and Uploads Artifact.
+  terraform-plan:
+    if: github.event.pull_request.merged != true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init 
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Render Plan for Comment
+        run: terraform show -no-color tfplan > plan.txt
+
+      - name: Post Plan to PR
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.txt', 'utf8');
+            // Truncate if too long for GitHub comment limit
+            const maxLen = 65000;
+            const planOutput = plan.length > maxLen ? plan.substring(0, maxLen) + "...(truncated)" : plan;
+            
+            const output = `#### Terraform Plan 📖
+            <details><summary>Show Plan</summary>
+            
+            \`\`\`hcl
+            ${planOutput}
+            \`\`\`
+            
+            </details>
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: tfplan-artifact
+          path: tfplan
+          retention-days: 4
+
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  # JOB 2: APPLY
+  # Runs ONLY when PR is Closed and Merged.
+  terraform-apply:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init 
+
+      # CRITICAL STEP: Download the artifact from the PR workflow run
+      # Standard actions/download-artifact cannot see artifacts from previous runs.
+      - name: Download Plan from PR
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: tf-init.yml
+          pr: ${{ github.event.pull_request.number }}
+          name: tfplan-artifact
+          path: ./
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
