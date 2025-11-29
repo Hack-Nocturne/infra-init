@@ -40,8 +40,8 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          echo "${{ secrets.TF_VARS }}" > prod.auto.tfvars
-          echo "${{ secrets.SSH_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -110,8 +110,8 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          echo "${{ secrets.TF_VARS }}" > prod.auto.tfvars
-          echo "${{ secrets.SSH_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.TF_VARS }}" > prod.auto.tfvars
+          printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
