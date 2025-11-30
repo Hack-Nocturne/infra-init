@@ -8,7 +8,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write # Required to post comments
+  actions: write # To trigger server-init workflow
+  pull-requests: write # To post comments on PR
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -41,7 +42,7 @@ jobs:
       - name: Create TF Deps
         run: |
           printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
-          printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -111,13 +112,13 @@ jobs:
       - name: Create TF Deps
         run: |
           printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
-          printf '%s' "${{ secrets.SSH_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init 
+        run: terraform init
 
       # CRITICAL STEP: Download the artifact from the PR workflow run
       # Standard actions/download-artifact cannot see artifacts from previous runs.
@@ -132,3 +133,29 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+
+      - name: Get TF Outputs
+        id: tf-outputs
+        run: |
+          echo "active_ipv4=$(terraform output -raw active_ipv4)" >> $GITHUB_OUTPUT
+          echo "active_username=$(terraform output -raw active_username)" >> $GITHUB_OUTPUT
+
+      - name: Trigger Server-Init Workflow via API
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              ref: context.ref.replace('refs/heads/', ''),
+              workflow_id: "server-init.yml",
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+
+              inputs: {
+                target_env: "Prod",
+                server_ipv4: "${{ steps.tf-outputs.outputs.active_ipv4 }}",
+                server_username: "${{ steps.tf-outputs.outputs.active_username }}"
+              }
+            });
+
+            console.log("✅ Server Init workflow triggered successfully.");

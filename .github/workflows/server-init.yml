@@ -1,4 +1,4 @@
-name: Initialize Infrastructure
+name: Server Init & Provisioning
 
 on:
   workflow_dispatch:
@@ -8,6 +8,7 @@ on:
         required: false
         default: false
         type: boolean
+
       target_env:
         type: choice
         description: "Select provisioning environment"
@@ -15,6 +16,18 @@ on:
           - Dev
           - Prod
         default: Dev
+
+      server_ipv4:
+        description: "Target server IPv4 address"
+        required: true
+        default: "127.0.0.1"
+        type: string
+
+      server_username:
+        description: "Target server SSH username"
+        required: true
+        default: "root"
+        type: string
 
 jobs:
   provision:
@@ -36,7 +49,7 @@ jobs:
         env:
           DEPLOY_SSH_PUB_KEY: ${{ secrets.DEPLOY_SSH_PUB_KEY }}
           ADMIN_SSH_PUB_KEY: ${{ secrets.ADMIN_SSH_PUB_KEY }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_LOGIN_PRIV_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -45,10 +58,10 @@ jobs:
           echo "$DEPLOY_SSH_PUB_KEY" > deploy.pub
           echo "$ADMIN_SSH_PUB_KEY" > admin.pub
 
-      - name: Build inventory from secret
+      - name: Build inventory from dispatch inputs
         run: |
           mkdir -p inventory
-          echo "${{ secrets.INVENTORY_YML }}" > inventory/hosts.yml
+          printf "all:\n  hosts:\n    server:\n      ansible_host: \"%s\"\n      ansible_user: \"%s\"\n" "${{ inputs.server_ipv4 }}" "${{ inputs.server_username }}" > inventory/hosts.yml
 
       - name: Test connectivity
         run: |
