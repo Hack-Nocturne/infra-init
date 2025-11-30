@@ -31,9 +31,3 @@ variable "az_vm_name" {
   description = "Name of the Virtual Machine"
   default     = "fleet-server"
 }
-
-variable "az_username" {
-  type        = string
-  description = "The username for the local account that will be created on the new VM."
-  default     = "az-admin"
-}
