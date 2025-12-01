@@ -1,6 +1,6 @@
 resource "digitalocean_ssh_key" "ssh_pub_key" {
   name       = "ssh-pub-key"
-  public_key = file(var.do_pub_ssh_key_file)
+  public_key = sensitive(file(var.do_pub_ssh_key_file))
 }
 
 resource "digitalocean_droplet" "api" {

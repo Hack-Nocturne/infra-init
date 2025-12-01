@@ -1,3 +1,7 @@
+locals {
+  username = "az-admin"
+}
+
 resource "azurerm_resource_group" "hnt_rg" {
   location = var.az_region
   name     = var.az_resource_group_name
@@ -57,6 +61,18 @@ resource "azurerm_network_security_group" "hnt_terraform_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+  
+  security_rule {
+    name                       = "AltSSH"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "6824"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 # Create network interface
@@ -105,16 +121,16 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
+    offer     = "ubuntu-25_04"
+    sku       = "minimal"
     version   = "latest"
   }
 
   computer_name  = "hostname"
-  admin_username = var.az_username
+  admin_username = local.username
 
   admin_ssh_key {
-    username   = var.az_username
-    public_key = file(var.az_pub_ssh_key_file)
+    username   = local.username
+    public_key = sensitive(file(var.az_pub_ssh_key_file))
   }
 }

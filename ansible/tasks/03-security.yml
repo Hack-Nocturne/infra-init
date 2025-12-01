@@ -98,6 +98,14 @@
     state: present
   loop: "{{ restricted_dirs }}"
 
+- name: Disable SSH for current user
+  authorized_key:
+    user: "{{ ansible_user }}"
+    state: absent
+    key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+  when: ansible_user is defined
+  ignore_errors: yes
+
 - name: Set ssh keys for users
   authorized_key:
     user: "{{ item.user }}"

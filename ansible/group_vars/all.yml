@@ -11,6 +11,7 @@ test_container_name: "podman-alpine-test"
 system_packages:
   - acl
   - htop
+  - cron
   - curl
   - nginx
   - podman

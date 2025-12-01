@@ -1,5 +1,6 @@
 locals {
   active_ipv4 = var.active_provider == "az" ? module.azure[0].vm_ipv4 : module.digitalocean[0].droplet_ipv4
+  active_username = var.active_provider == "az" ? "az-admin" : "root"
 }
 
 module "digitalocean" {
