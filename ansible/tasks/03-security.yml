@@ -43,8 +43,8 @@
     append: yes
     create_home: yes
   loop:
-    - { name: "{{ admin_user }}", groups: "sudo", shell: "/bin/bash", password: "{{ admin_pwd_hashed }}" }
-    - { name: "{{ deploy_user }}", groups: "{{ deploy_group }}", shell: "{{ obscured_dir }}/rbash.sh", password: "{{ deploy_pwd_hashed }}" }
+    - { name: "{{ admin_user }}", groups: "sudo", shell: "/bin/bash", password: "{{ admin_pwd | password_hash(hashtype='sha512') }}" }
+    - { name: "{{ deploy_user }}", groups: "{{ deploy_group }}", shell: "{{ obscured_dir }}/rbash.sh", password: "{{ deploy_pwd | password_hash(hashtype='sha512') }}" }
 
 - name: Ensure subuid & subgid mapping exists
   lineinfile:
@@ -99,10 +99,9 @@
   loop: "{{ restricted_dirs }}"
 
 - name: Disable SSH for current user
-  authorized_key:
-    user: "{{ ansible_user }}"
+  file:
+    path: /home/{{ ansible_user }}/.ssh/authorized_keys
     state: absent
-    key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
   when: ansible_user is defined
   ignore_errors: yes
 

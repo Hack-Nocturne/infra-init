@@ -78,14 +78,15 @@ jobs:
           echo "${{ secrets.CF_CERT }}" > cf_cert.pem
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
           
-          deploy_pwd_hashed=$(openssl passwd -6 "${{ secrets.DEPLOY_PWD }}")
-          admin_pwd_hashed=$(openssl passwd -6 "${{ secrets.ADMIN_PWD }}")
-
           ansible-playbook site.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
-            -e "deploy_pwd_hashed=${deploy_pwd_hashed}" \
-            -e "admin_pwd_hashed=${admin_pwd_hashed}" \
+            -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
+            -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
+
+      - name: Test Connection Post-Provisioning
+        run: |
+          nc -zv -w 10 ${{ inputs.server_ipv4 }} 6824
 
       - name: Cleanup files
         if: always()
