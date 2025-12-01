@@ -58,6 +58,10 @@ jobs:
           echo "$DEPLOY_SSH_PUB_KEY" > deploy.pub
           echo "$ADMIN_SSH_PUB_KEY" > admin.pub
 
+      - name: Install Ansible & Passlib
+        run: |
+          pip install ansible passlib
+
       - name: Build inventory from dispatch inputs
         run: |
           mkdir -p inventory
