@@ -29,3 +29,8 @@ variable "cf_config" {
     is_dev    = optional(bool, true)
   })
 }
+
+variable "ssh_port" {
+  type      = string
+  sensitive = true
+}

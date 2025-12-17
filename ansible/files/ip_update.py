@@ -2,11 +2,14 @@
 # Should be copied to target machine at /etc/cron.d/ip_update.py
 
 import os
+import sys
 import hashlib
 import logging
 import requests
 import subprocess
 from jinja2 import Template
+
+ssh_port = sys.argv[1] if len(sys.argv) > 1 else "22"
 
 # -------- FUNCTIONS --------
 def read_file(file_path, fail_on_404=False):
@@ -79,6 +82,7 @@ def main():
     if new_hash != old_hash:
       write_file(CF_IP_HASH_FILE, new_hash)
       render_context = {
+        "ssh_port": ssh_port,
         "cf_ipv4": ipv4,
         "cf_ipv6": ipv6
       }

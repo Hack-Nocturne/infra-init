@@ -69,7 +69,7 @@ resource "azurerm_network_security_group" "hnt_terraform_nsg" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "6824"
+    destination_port_range     = var.ssh_port
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -126,11 +126,39 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
     version   = "latest"
   }
 
-  computer_name  = "hostname"
+  computer_name  = "hnt-prod-server"
   admin_username = local.username
 
   admin_ssh_key {
     username   = local.username
     public_key = sensitive(file(var.az_pub_ssh_key_file))
   }
+
+  # Enable system assigned managed identity for blob storage access
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_storage_account" "hnt_storage_acc" {
+  name                     = "hacknocturne" # need to be globally unique
+  resource_group_name      = azurerm_resource_group.hnt_rg.name
+  location                 = azurerm_resource_group.hnt_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_container" "hnt_storage_blob" {
+  name                  = "opa"
+  storage_account_id    = azurerm_storage_account.hnt_storage_acc.id
+  container_access_type = "private"
+}
+
+# Role assignment for OPA to read blobs
+resource "azurerm_role_assignment" "opa_blob_reader" {
+  scope                = azurerm_storage_account.hnt_storage_acc.id
+  role_definition_name = "Storage Blob Data Reader"
+
+  # bind the VM's system-assigned identity
+  principal_id = azurerm_linux_virtual_machine.hnt_terraform_vm.identity[0].principal_id
 }

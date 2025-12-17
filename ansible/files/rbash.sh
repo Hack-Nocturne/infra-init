@@ -10,6 +10,15 @@ case ":$PATH:" in
   *) export PATH="$SCRIPT_DIR:$PATH" ;;
 esac
 
+# Disable TAB completions
+set -o emacs
+bind 'TAB: self-insert'
+
+# Kill any completion engines
+export INPUTRC=/dev/null
+unset -f complete
+unset -f compgen
+
 shopt -u cdable_vars
 shopt -u sourcepath
 shopt -u dotglob
@@ -37,6 +46,7 @@ GLOBAL_BLOCKED_PATTERN=(
   '^podman exec'
   '^podman cp'
 
+  '^unminimize'
   '^complete'
   '^iptables'
   '^tcpdump'
@@ -49,8 +59,11 @@ GLOBAL_BLOCKED_PATTERN=(
 
   '^killall'
   '^strace'
+  '^locate'
   '^pkill'
   '^htop'
+  '^find'
+  '^tree'
   '^free'
   '^lsof'
   '^kill'
@@ -188,6 +201,7 @@ if [[ -n "$CMD" ]]; then
 fi
 
 # --- Interactive SSH session ---
+clear
 safe_echo "👋 Welcome back $USER!"
 safe_echo "🔐 You are operating in restricted mode."
 safe_echo "🍁 Hit CTRL+C to exit the session, use 's' command to view system stats."

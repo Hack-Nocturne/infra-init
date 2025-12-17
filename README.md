@@ -15,22 +15,22 @@ This project automates the complete setup of production-ready Linux servers opti
 ## 🏗️ Architecture
 
 ```
-┌─────────────┐     ┌────────────┐    ┌─────────────────┐
-│ Cloudflare  │───▶│  nftables  │───▶│     Nginx       │
-│ (SSL/Proxy) │     │ (Firewall) │    │ (Load Balancer) │
-└─────────────┘     └────────────┘    └─────────────────┘
-                                               │
-                                     ┌─────────┴─────────┐
-                                     │                   │
-                             ┌───────▼──────┐     ┌──────▼───────┐
-                             │ Blue Pool    │     │ Green Pool   │
-                             │ :2020, :2021 │     │ :4040, :4041 │
-                             └──────────────┘     └──────────────┘
-                                     │                    │
-                               ┌─────▼──────┐       ┌─────▼──────┐
-                               │ Podman     │       │ Podman     │
-                               │ Containers │       │ Containers │
-                               └────────────┘       └────────────┘
+┌─────────────┐    ┌────────────┐    ┌─────────────────┐
+│ Cloudflare  │───>│  nftables  │───>│      Nginx      │
+│ (SSL/Proxy) │    │ (Firewall) │    │ (Load Balancer) │
+└─────────────┘    └────────────┘    └─────────────────┘
+                                              │
+                                    ┌─────────┴─────────┐
+                                    │                   │
+                            ┌───────▼──────┐     ┌──────▼───────┐
+                            │ Blue Pool    │     │ Green Pool   │
+                            │ :2020, :2021 │     │ :4040, :4041 │
+                            └──────────────┘     └──────────────┘
+                                    │                    │
+                              ┌─────▼──────┐       ┌─────▼──────┐
+                              │ Podman     │       │ Podman     │
+                              │ Containers │       │ Containers │
+                              └────────────┘       └────────────┘
 ```
 
 ## 🔧 Configuration
@@ -48,7 +48,6 @@ green_upstreams:
   - { host: "127.0.0.1", port: 4041 }
 
 # Security Configuration
-ssh_port: 4568
 deploy_user: "deployer"
 admin_user: "admin"
 
@@ -66,6 +65,10 @@ ssl_key_path: /etc/nginx/ssl/cf_origin.key
 - `CF_KEY`: Cloudflare Origin Certificate private key
 - `DEPLOY_PWD` & `ADMIN_PWD`: Respective users' passwords
 - `OBSCURED_DIR`: Directory on hosts where scripts for deploy group resides
+- `AWS_*`: AWS credentials for Terraform state backend
+- `AZURE_*`: Azure credentials for infrastructure provisioning
+- `SEC_SSH_PORT`: Custom SSH port for server access
+- `TF_VARS_B64`: Base64 encoded Terraform variable file content
 
 ## 🚀 Usage
 
@@ -103,8 +106,8 @@ Use the [`deploy.sh`](ansible/files/deploy.sh) script for blue-green deployments
 ## 🛡️ Security Features
 
 ### Network Security
-- **Firewall**: nftables configuration allowing only Cloudflare IP ranges for HTTP/HTTPS
-- **SSH Security**: Custom port, key-only authentication, connection limits
+- **Firewall**: nftables configuration allowing only Cloudflare IP ranges for HTTPS
+- **SSH Security**: Custom port, key-only authentication with connection limits
 - **IP Whitelisting**: Automatic Cloudflare IP range updates every 6 hours
 
 ### User Security
@@ -143,11 +146,6 @@ Use the [`deploy.sh`](ansible/files/deploy.sh) script for blue-green deployments
 
 ## 🎯 Future Roadmap
 
-### 🔐 Open Policy Agent (OPA) Integration
-- **Policy Enforcement**: Fine-grained authorization policies for API access
-- **Compliance**: Automated security policy validation and enforcement
-- **Audit Logging**: Comprehensive access logging and policy decision tracking
-
 ### ⚡ Valkey Integration
 - **Caching Layer**: High-performance Redis-compatible caching solution
 - **Session Management**: Distributed session storage for scalable applications
@@ -161,7 +159,7 @@ Use the [`deploy.sh`](ansible/files/deploy.sh) script for blue-green deployments
 ## 📋 Prerequisites
 
 - **Target Servers**: Ubuntu/Debian-based Linux servers
-- **Ansible**: Version 2.9+ with required collections
+- **Ansible**: Version 2.18+ with required collections
 - **SSH Access**: Root or sudo access to target servers
 - **Cloudflare**: Account with Origin Certificate
 - **GitHub**: Repository with GH-Actions (for automated deployment)

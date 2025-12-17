@@ -30,3 +30,6 @@ cf_config = {
   # Optional parameters
   # is_dev = true
 }
+
+# Post provisioning SSH port (should be kept secret)
+ssh_port = "2222"

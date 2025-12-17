@@ -1,6 +1,7 @@
 output "active_ipv4" {
   value       = local.active_ipv4
   description = "Active VM public IPv4 based on selected provider"
+  sensitive   = true
 }
 
 output "active_username" {

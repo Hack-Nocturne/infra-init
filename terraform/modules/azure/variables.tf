@@ -31,3 +31,8 @@ variable "az_vm_name" {
   description = "Name of the Virtual Machine"
   default     = "fleet-server"
 }
+
+variable "ssh_port" {
+  type      = string
+  sensitive = true
+}

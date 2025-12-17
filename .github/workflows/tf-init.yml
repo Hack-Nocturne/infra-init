@@ -48,12 +48,16 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init 
+        run: terraform init
+        env:
+          TF_IN_AUTOMATION: true
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: terraform plan -no-color -out=tfplan -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
         continue-on-error: true
+        env:
+          TF_IN_AUTOMATION: true
 
       - name: Render Plan for Comment
         run: terraform show -no-color tfplan > plan.txt
@@ -111,7 +115,6 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
           printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
@@ -119,6 +122,8 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        env:
+          TF_IN_AUTOMATION: true
 
       # CRITICAL STEP: Download the artifact from the PR workflow run
       # Standard actions/download-artifact cannot see artifacts from previous runs.
@@ -133,11 +138,16 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+        env:
+          TF_IN_AUTOMATION: true
 
       - name: Get TF Outputs
         id: tf-outputs
         run: |
-          echo "active_ipv4=$(terraform output -raw active_ipv4)" >> $GITHUB_OUTPUT
+          machine_ip=$(terraform output -raw active_ipv4)
+          echo "::add-mask::${machine_ip}"
+
+          echo "active_ipv4=${machine_ip}" >> $GITHUB_OUTPUT
           echo "active_username=$(terraform output -raw active_username)" >> $GITHUB_OUTPUT
 
       - name: Trigger Server-Init Workflow via API

@@ -33,7 +33,6 @@ cron_script_dir: "/etc/cron.d"
 deploy_user: "deployer"
 deploy_group: "deploy"
 admin_user: "admin"
-ssh_port: 6824
 
 restricted_dirs:
   - "/etc/nginx/ssl"
@@ -63,5 +62,13 @@ blue_upstreams:
 green_upstreams:
   - { host: "127.0.0.1", port: 4040 }
   - { host: "127.0.0.1", port: 4041 }
+
+# endregion
+
+# region OPA Variables
+
+opa_port: 1010
+opa_data_dir: /etc/opa
+opa_bin_path: /usr/local/bin/opa
 
 # endregion
