@@ -22,8 +22,8 @@ table inet filter {
     # Allow established/related
     ct state established,related accept
 
-    # Allow SSH from anywhere
-    tcp dport 6824 accept
+    # Allow SSH from anywhere on private port
+    tcp dport {{ ssh_port }} accept
 
     # Allow Cloudflare HTTP/HTTPS
     ip saddr @cloudflare_v4 tcp dport { 80, 443 } accept

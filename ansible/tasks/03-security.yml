@@ -6,6 +6,7 @@
     daemon_reload: yes
 
 - name: Ensure obscured directory exists
+  no_log: true
   file:
     path: "{{ obscured_dir }}"
     state: directory
@@ -14,6 +15,7 @@
     group: root
 
 - name: Copy deploy script
+  no_log: true
   copy:
     src: "files/deploy.sh"
     dest: "{{ obscured_dir }}/deploy.sh"
@@ -22,6 +24,7 @@
     group: root
 
 - name: Copy rbash.sh script
+  no_log: true
   copy:
     src: "files/rbash.sh"
     dest: "{{ obscured_dir }}/rbash.sh"
@@ -106,6 +109,7 @@
   ignore_errors: yes
 
 - name: Set ssh keys for users
+  no_log: true
   authorized_key:
     user: "{{ item.user }}"
     state: present
@@ -121,7 +125,7 @@
     group: root
     mode: '0600'
     content: |
-      Port {{ ssh_port }}
+      Port {{ sec_ssh_port }}
       Protocol 2
       PermitRootLogin no
       PasswordAuthentication no

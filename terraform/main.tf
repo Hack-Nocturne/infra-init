@@ -22,6 +22,7 @@ module "azure" {
   az_pub_ssh_key_file = var.az_config.pub_ssh_key_file
   az_region           = var.az_config.region
   az_vm_size          = var.az_config.size
+  ssh_port            = var.ssh_port
 }
 
 module "cloudflare" {

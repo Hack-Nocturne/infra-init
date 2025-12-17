@@ -44,6 +44,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Mask IPv4
+        run: |
+          machine_ip=$(jq -r '.inputs.server_ipv4' ${GITHUB_EVENT_PATH})
+          echo "::add-mask::${machine_ip}"
+
       - name: Setup SSH key
         id: setup_ssh_key
         env:
@@ -86,11 +91,12 @@ jobs:
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
             -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
             -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
+            -e "sec_ssh_port=${{ secrets.SEC_SSH_PORT }}" \
             ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
 
       - name: Test Connection Post-Provisioning
         run: |
-          nc -zv -w 10 ${{ inputs.server_ipv4 }} 6824
+          nc -zv -w 10 ${{ inputs.server_ipv4 }} ${{ secrets.SEC_SSH_PORT }}
 
       - name: Cleanup files
         if: always()

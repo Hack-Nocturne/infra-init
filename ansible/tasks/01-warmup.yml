@@ -64,7 +64,7 @@
 
           cd {{ cron_script_dir }} # Set working directory
           source {{ cron_script_dir }}/venv/bin/activate # activate venv
-          python3 {{ cron_script_dir }}/ip_update.py # fire the py-script
+          python3 {{ cron_script_dir }}/ip_update.py {{ sec_ssh_port }} # fire the py-script
         dest: "{{ cron_script_dir }}/run_ip_update.sh"
         mode: '0755'
         owner: root

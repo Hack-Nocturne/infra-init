@@ -1,4 +1,5 @@
 - name: Load cert and key as base64
+  no_log: true
   set_fact:
     cf_cert_b64: "{{ lookup('file', 'cf_cert.pem') | b64encode }}"
     cf_key_b64:  "{{ lookup('file', 'cf_cert.key') | b64encode }}"

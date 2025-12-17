@@ -1,0 +1,46 @@
+- name: Download OPA binary
+  get_url:
+    url: "https://openpolicyagent.org/downloads/latest/opa_linux_amd64"
+    dest: "{{ opa_bin_path }}"
+    mode: '0755'
+
+- name: Create OPA data directory
+  file:
+    path: "{{ opa_data_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Copy OPA configuration file
+  copy:
+    src: "files/opa-config.yaml"
+    dest: "{{ opa_data_dir }}/opa-config.yaml"
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create systemd service for OPA
+  copy:
+    dest: /etc/systemd/system/opa.service
+    content: |
+      [Unit]
+      Description=Open Policy Agent
+      After=network.target
+
+      [Service]
+      ExecStart={{ opa_bin_path }} run -s -a :{{ opa_port }} -c {{ opa_data_dir }}/opa-config.yaml
+      Restart=on-failure
+      User=root
+      Group=root
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+
+- name: Enable and start OPA service
+  systemd:
+    name: opa
+    enabled: yes
+    state: started
+    daemon_reload: yes
