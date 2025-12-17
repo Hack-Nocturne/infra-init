@@ -72,3 +72,13 @@ opa_data_dir: /etc/opa
 opa_bin_path: /usr/local/bin/opa
 
 # endregion
+
+# region Valkey Variables
+
+valkey_container_name: valkey-server
+valkey_image: "docker.io/valkey/valkey:alpine"
+valkey_data_dir: "/opt/valkey/data"
+valkey_memory_limit: "512m"
+valkey_cpu_limit: "0.5"
+
+# endregion

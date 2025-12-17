@@ -1,0 +1,37 @@
+- name: Ensure persistent storage directory exists
+  file:
+    path: "{{ valkey_data_dir }}"
+    state: directory
+    mode: '0755' # ToDo: Restrict permissions to UID: 999
+    owner: root
+    group: root
+
+- name: Create Valkey container
+  containers.podman.podman_container:
+    name: "{{ valkey_container_name }}"
+    image: "{{ valkey_image }}"
+    state: created
+    command: valkey-server --appendonly yes
+    restart_policy: on-failure
+    volumes:
+      - "{{ valkey_data_dir }}:/data:Z"
+    ports:
+      - "127.0.0.1:6379:6379"
+    memory: "{{ valkey_memory_limit }}"
+    cpus: "{{ valkey_cpu_limit }}"
+    conmon_pidfile: "/run/{{ valkey_container_name }}.pid"
+    generate_systemd:
+      after:
+        - network-online.target
+      wants:
+        - network-online.target
+      path: /etc/systemd/system
+      restart_policy: always
+      new: true
+
+- name: Enable and Start Valkey service
+  systemd:
+    name: "container-{{ valkey_container_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
