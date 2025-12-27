@@ -31,6 +31,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+  use_oidc = true
   subscription_id = var.az_config.subscription_id
 }
 
