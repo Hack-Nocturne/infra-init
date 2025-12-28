@@ -137,7 +137,7 @@ fi
 # --- 7. Pull the $IMAGE in RETRIEVE mode ---
 if [[ "$RETRIEVE" == "true" ]]; then
   echo "🔃 Pulling image from: $IMAGE"
-  podman pull "$IMAGE"
+  podman pull -q "$IMAGE"
 fi
 
 target="${container}-${deploy_port}"

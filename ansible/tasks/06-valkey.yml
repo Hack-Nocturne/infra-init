@@ -16,7 +16,7 @@
     volumes:
       - "{{ valkey_data_dir }}:/data:Z"
     ports:
-      - "127.0.0.1:6379:6379"
+      - "6379:6379" # Exposed on host for access within containers
     memory: "{{ valkey_memory_limit }}"
     cpus: "{{ valkey_cpu_limit }}"
     conmon_pidfile: "/run/{{ valkey_container_name }}.pid"
