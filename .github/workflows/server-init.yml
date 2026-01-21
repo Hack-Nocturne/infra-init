@@ -3,20 +3,6 @@ name: Server Init & Provisioning
 on:
   workflow_dispatch:
     inputs:
-      verbose:
-        description: 'Enable detailed & verbose output?'
-        required: false
-        default: false
-        type: boolean
-
-      target_env:
-        type: choice
-        description: "Select provisioning environment"
-        options:
-          - Dev
-          - Prod
-        default: Dev
-
       server_ipv4:
         description: "Target server IPv4 address"
         required: true
@@ -33,7 +19,7 @@ jobs:
   provision:
     name: Provision Remote Servers
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target_env }}
+    environment: ${{ vars.TARGET_ENV }}
     
     defaults:
       run:
@@ -86,13 +72,19 @@ jobs:
         run: |
           echo "${{ secrets.CF_CERT }}" > cf_cert.pem
           echo "${{ secrets.CF_KEY }}" > cf_cert.key
+
+          EXTRA_ARGS=""
+          if [ "${{ vars.TARGET_ENV }}" != "Prod" ]; then
+            EXTRA_ARGS="-v"
+          fi
           
           ansible-playbook site.yml \
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
+            -e "sec_ssh_port=${{ secrets.SEC_SSH_PORT }}" \
             -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
             -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
-            -e "sec_ssh_port=${{ secrets.SEC_SSH_PORT }}" \
-            ${{ inputs.verbose == 'true' && '-vvv' || '-v' }}
+            -e "target_env=${{ vars.TARGET_ENV }}" \
+            ${EXTRA_ARGS}
 
       - name: Test Connection Post-Provisioning
         run: |

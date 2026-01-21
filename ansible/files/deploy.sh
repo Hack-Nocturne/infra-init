@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # docs: https://mag37.org/posts/guide_podman_quadlets/
-set -euo pipefail
+set -euo pipefail # Strict Mode
 
 usage() {
-  echo "⚡ Usage: $0 -a APP_NAME -p APP_PORT -g GREEN_PORT -b BLUE_PORT -v VERSION -f [true|false] -g [true|false]"
+  echo "⚡ Usage: $0 -a APP_NAME -p APP_PORT -g GREEN_PORT -b BLUE_PORT -t TAG -f [true|false] -g [true|false]"
   echo "  -a APP_NAME      : Name of the application (required)"
   echo "  -p APP_PORT      : Port the application listens on inside container"
   echo "  -g GREEN_PORT    : Deployment port for green mode on host network"
   echo "  -b BLUE_PORT     : Deployment port for blue mode on host network"
-  echo "  -v VERSION       : Version of the application/image"
+  echo "  -t TAG           : Tag of the application/image"
   echo "  -f [true|false]  : Flip the deployment mode (default: false)"
   echo "  -r [true|false]  : Retrieve the image from ghcr.io (default: false)"
   exit 1
@@ -21,16 +21,16 @@ APP_PORT=""
 GREEN_PORT=""
 BLUE_PORT=""
 FLIP="false"
-VERSION=""
+TAG=""
 RETRIEVE="false"
 
-while getopts "a:p:g:b:v:f:r:" opt; do
+while getopts "a:p:g:b:t:f:r:" opt; do
   case ${opt} in
     a) APP_NAME="$OPTARG" ;;
     p) APP_PORT="$OPTARG" ;;
     g) GREEN_PORT="$OPTARG" ;;
     b) BLUE_PORT="$OPTARG" ;;
-    v) VERSION="$OPTARG" ;;
+    t) TAG="$OPTARG" ;;
     f) FLIP="$OPTARG" ;;
     r) RETRIEVE="$OPTARG" ;;
     *) usage ;;
@@ -48,8 +48,8 @@ if [[ "$RETRIEVE" != "true" && "$RETRIEVE" != "false" ]]; then
 fi
 
 if [[ "$FLIP" == "false" ]]; then
-  [[ -z "$APP_NAME" || -z "$APP_PORT" || -z "$GREEN_PORT" || -z "$BLUE_PORT" || -z "$VERSION" ]] && {
-    echo "❌ When FLIP=false, -a, -p, -dg, -db, and -v are required"
+  [[ -z "$APP_NAME" || -z "$APP_PORT" || -z "$GREEN_PORT" || -z "$BLUE_PORT" || -z "$TAG" ]] && {
+    echo "❌ When FLIP=false, -a, -p, -dg, -db, and -t are required"
     usage
   }
 elif [[ -z "$APP_NAME" ]]; then
@@ -58,7 +58,7 @@ elif [[ -z "$APP_NAME" ]]; then
 fi
 
 # --- 2. Prepare Constants & ENV ---
-IMAGE="ghcr.io/hack-nocturne/$APP_NAME:$VERSION"
+IMAGE="ghcr.io/hack-nocturne/$APP_NAME:$TAG"
 CONF_FILE="/etc/nginx/conf.d/active_color.conf"
 ENV_FILE="$HOME/.config/$APP_NAME.env"
 
@@ -81,11 +81,9 @@ if [[ "$FLIP" == "false" ]]; then
       value="${value#\"}"
       value="${value%\'}"
       value="${value#\'}"
-      
-      secret_name="${APP_NAME}_${key,,}" # to lowercase
-      echo "Creating secret: $secret_name"
-      
+
       # Create secret from the value
+      secret_name="${APP_NAME}_${key,,}" # to lowercase
       printf "$value" | podman secret create --replace "$secret_name" -
       SECRET_NAMES+=("$secret_name")
     done < "$ENV_FILE"
@@ -176,6 +174,9 @@ After=network-online.target
 [Container]
 PublishPort=127.0.0.1:$deploy_port:$APP_PORT
 ContainerName=${container}-$deploy_port
+Environment=HOST_PORT=$deploy_port
+Environment=CHANNEL=$new_color
+Environment=NAME=$APP_NAME
 NoNewPrivileges=true
 DropCapability=all
 ReadOnly=true
@@ -194,7 +195,7 @@ EOF
 systemctl --user daemon-reload
 systemctl --user start $target
 
-echo "✅ Application '$APP_NAME:$VERSION' is now live for '$new_color' deployment (container: $target)"
-echo "👟 Use '$0 -a $APP_NAME -f true' to switch traffic to this deployment"
+echo "✅ Application '$APP_NAME:$TAG' is now live for '$new_color' deployment (container: $target)"
+echo "👟 Use 'deploy.sh -a $APP_NAME -f true' to steer traffic to this deployment"
 
 # --- [Signing Off] ---

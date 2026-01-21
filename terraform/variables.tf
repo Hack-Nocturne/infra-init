@@ -34,3 +34,7 @@ variable "ssh_port" {
   type      = string
   sensitive = true
 }
+
+variable "target_env" {
+  type      = string
+}

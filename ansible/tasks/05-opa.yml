@@ -13,8 +13,8 @@
     group: root
 
 - name: Copy OPA configuration file
-  copy:
-    src: "files/opa-config.yaml"
+  template:
+    src: "templates/opa-config.yaml.j2"
     dest: "{{ opa_data_dir }}/opa-config.yaml"
     mode: '0755'
     owner: root

@@ -14,8 +14,7 @@ variable "cf_api_server_ipv4" {
   description = "API server IPv4 address"
 }
 
-variable "cf_is_dev" {
-  type        = bool
-  description = "Indicates if the resource is for development or testing"
-  default     = true
+variable "target_env" {
+  type = string
+  description = "Target environment (e.g., dev, stage, prod)"
 }

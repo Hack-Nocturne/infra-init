@@ -1,15 +1,17 @@
 locals {
   username = "az-admin"
+  env_name  = lower(var.target_env)
+  az_rn   = "${var.az_resource_group_name}-${local.env_name}"
 }
 
 resource "azurerm_resource_group" "hnt_rg" {
   location = var.az_region
-  name     = var.az_resource_group_name
+  name     = local.az_rn
 }
 
 # Create virtual network
 resource "azurerm_virtual_network" "hnt_terraform_network" {
-  name                = "${var.az_resource_group_name}-vnet"
+  name                = "${local.az_rn}-vnet"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.hnt_rg.location
   resource_group_name = azurerm_resource_group.hnt_rg.name
@@ -17,7 +19,7 @@ resource "azurerm_virtual_network" "hnt_terraform_network" {
 
 # Create subnet
 resource "azurerm_subnet" "hnt_terraform_subnet" {
-  name                 = "${var.az_resource_group_name}-subnet"
+  name                 = "${local.az_rn}-subnet"
   resource_group_name  = azurerm_resource_group.hnt_rg.name
   virtual_network_name = azurerm_virtual_network.hnt_terraform_network.name
   address_prefixes     = ["10.0.1.0/24"]
@@ -25,7 +27,7 @@ resource "azurerm_subnet" "hnt_terraform_subnet" {
 
 # Create public IPs
 resource "azurerm_public_ip" "hnt_terraform_public_ip" {
-  name                = "${var.az_resource_group_name}-public-ip"
+  name                = "${local.az_rn}-public-ip"
   location            = azurerm_resource_group.hnt_rg.location
   resource_group_name = azurerm_resource_group.hnt_rg.name
   allocation_method   = "Static"
@@ -34,7 +36,7 @@ resource "azurerm_public_ip" "hnt_terraform_public_ip" {
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "hnt_terraform_nsg" {
-  name                = "${var.az_resource_group_name}-nsg"
+  name                = "${local.az_rn}-nsg"
   location            = azurerm_resource_group.hnt_rg.location
   resource_group_name = azurerm_resource_group.hnt_rg.name
 
@@ -77,7 +79,7 @@ resource "azurerm_network_security_group" "hnt_terraform_nsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "hnt_terraform_nic" {
-  name                = "${var.az_resource_group_name}-nic"
+  name                = "${local.az_rn}-nic"
   location            = azurerm_resource_group.hnt_rg.location
   resource_group_name = azurerm_resource_group.hnt_rg.name
 
@@ -126,7 +128,7 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
     version   = "latest"
   }
 
-  computer_name  = "hnt-prod-server"
+  computer_name  = "hnt-" + local.env_name
   admin_username = local.username
 
   admin_ssh_key {
@@ -141,7 +143,7 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
 }
 
 resource "azurerm_storage_account" "hnt_storage_acc" {
-  name                     = "hacknocturne" # need to be globally unique
+  name                     = "hacknocturne" + local.env_name # need to be globally unique
   resource_group_name      = azurerm_resource_group.hnt_rg.name
   location                 = azurerm_resource_group.hnt_rg.location
   account_tier             = "Standard"
