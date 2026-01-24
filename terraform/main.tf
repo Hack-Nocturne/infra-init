@@ -22,7 +22,9 @@ module "azure" {
   az_pub_ssh_key_file = var.az_config.pub_ssh_key_file
   az_region           = var.az_config.region
   az_vm_size          = var.az_config.size
+
   ssh_port            = var.ssh_port
+  target_env          = var.target_env
 }
 
 module "cloudflare" {
@@ -30,6 +32,16 @@ module "cloudflare" {
 
   cf_api_token       = var.cf_config.api_token
   cf_zone_id         = var.cf_config.zone_id
-  cf_is_dev          = var.cf_config.is_dev
   cf_api_server_ipv4 = local.active_ipv4
+  
+  target_env         = var.target_env
+}
+
+module "neon" {
+  source = "./modules/neon"
+
+  neon_org_id  = var.neon_config.org_id
+  neon_api_key = var.neon_config.api_key
+
+  target_env = var.target_env
 }

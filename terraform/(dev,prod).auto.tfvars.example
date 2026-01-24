@@ -26,10 +26,15 @@ cf_config = {
   # Required parameters
   api_token = "cf_secret_api_token"
   zone_id   = "cf_zone_id_of_domain"
+}
 
-  # Optional parameters
-  # is_dev = true
+neon_config {
+  org_id  = "neon_organization_id"
+  api_key = "org-wide_api_key"
 }
 
 # Post provisioning SSH port (should be kept secret)
 ssh_port = "2222"
+
+# Auto injected for staging or production workflows
+target_env = "Dev"

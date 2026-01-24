@@ -26,11 +26,22 @@ variable "cf_config" {
   type = object({
     api_token = string
     zone_id   = string
-    is_dev    = optional(bool, true)
+  })
+}
+
+variable "neon_config" {
+  type = object({
+    org_id = string
+    api_key = string
   })
 }
 
 variable "ssh_port" {
   type      = string
   sensitive = true
+}
+
+variable "target_env" {
+  type      = string
+  default   = "Dev"
 }

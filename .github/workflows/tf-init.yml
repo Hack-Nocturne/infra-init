@@ -38,6 +38,7 @@ jobs:
   # JOB 1: PLAN
   # Runs on PR Open/Update. It Generates Plan, Comments, and Uploads Artifact.
   terraform-plan:
+    environment: ${{ vars.TARGET_ENV }}
     if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
 
@@ -54,20 +55,24 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > prod.auto.tfvars
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > ${{ vars.TARGET_ENV }}.auto.tfvars
           printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="key=${{ vars.TARGET_ENV }}.tfstate"
         env:
           TF_IN_AUTOMATION: true
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -out=tfplan -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
+        run: |
+          terraform plan \
+            -no-color -out=tfplan \
+            -var="target_env=${{ vars.TARGET_ENV }}" \
+            -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
         continue-on-error: true
         env:
           TF_IN_AUTOMATION: true
@@ -141,7 +146,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="key=${{ vars.TARGET_ENV }}.tfstate"
         env:
           TF_IN_AUTOMATION: true
 
@@ -182,7 +187,6 @@ jobs:
               repo: context.repo.repo,
 
               inputs: {
-                target_env: "Prod",
                 server_ipv4: "${{ steps.tf-outputs.outputs.active_ipv4 }}",
                 server_username: "${{ steps.tf-outputs.outputs.active_username }}"
               }

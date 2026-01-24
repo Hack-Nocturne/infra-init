@@ -1,0 +1,4 @@
+>> Use this file as aol (Append Only Log) to store source of truth for pr based deployments
+>> Essentially to keep track of sequencing, add Stage or Prod when either of it is going live in next line + crlf
+
+Stage

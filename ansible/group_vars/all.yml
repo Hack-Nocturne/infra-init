@@ -48,7 +48,7 @@ ssl_cert_path: /etc/nginx/ssl/cf_origin.pem
 ssl_key_path:  /etc/nginx/ssl/cf_origin.key
 
 # Health-checks (must return 200)
-healthcheck_path: /health-check
+healthcheck_path: /healthz
 healthcheck_host_header: hack-nocturne.in
 health_timeout_seconds: 2
 health_retries: 3
