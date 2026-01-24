@@ -68,10 +68,11 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan \
-          -no-color -out=tfplan \
-          -var="target_env=${{ vars.TARGET_ENV }}" \
-          -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
+        run: |
+          terraform plan \
+            -no-color -out=tfplan \
+            -var="target_env=${{ vars.TARGET_ENV }}" \
+            -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
         continue-on-error: true
         env:
           TF_IN_AUTOMATION: true
