@@ -128,7 +128,7 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
     version   = "latest"
   }
 
-  computer_name  = "hnt-" + local.env_name
+  computer_name  = "hnt-${local.env_name}"
   admin_username = local.username
 
   admin_ssh_key {
@@ -143,7 +143,7 @@ resource "azurerm_linux_virtual_machine" "hnt_terraform_vm" {
 }
 
 resource "azurerm_storage_account" "hnt_storage_acc" {
-  name                     = "hacknocturne" + local.env_name # need to be globally unique
+  name                     = "hacknocturne${local.env_name}" # need to be globally unique
   resource_group_name      = azurerm_resource_group.hnt_rg.name
   location                 = azurerm_resource_group.hnt_rg.location
   account_tier             = "Standard"
