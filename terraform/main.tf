@@ -36,3 +36,12 @@ module "cloudflare" {
   
   target_env         = var.target_env
 }
+
+module "neon" {
+  source = "./modules/neon"
+
+  neon_org_id  = var.neon_config.org_id
+  neon_api_key = var.neon_config.api_key
+
+  target_env = var.target_env
+}

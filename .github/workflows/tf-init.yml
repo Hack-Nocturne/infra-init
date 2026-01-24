@@ -38,6 +38,7 @@ jobs:
   # JOB 1: PLAN
   # Runs on PR Open/Update. It Generates Plan, Comments, and Uploads Artifact.
   terraform-plan:
+    environment: ${{ vars.TARGET_ENV }}
     if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
 
