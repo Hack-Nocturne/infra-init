@@ -1,0 +1,148 @@
+name: Terraform Resource Destruction
+
+on:
+  workflow_dispatch:
+    inputs:
+      password:
+        description: 'Destruction Password'
+        required: true
+        type: string
+      totp_code:
+        description: '6-digit TOTP Code'
+        required: true
+        type: string
+      destruct_env:
+        description: 'Environment to destroy'
+        required: true
+        type: choice
+        options:
+            - Prod
+            - Stage
+
+permissions:
+  contents: read
+  id-token: write # For Azure OIDC
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  
+  # Azure Credentials
+  ARM_USE_OIDC: true
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  WORKING_DIR: ./terraform
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    name: "Verify & Destroy"
+    environment: ${{ vars.TARGET_ENV }}
+
+    defaults:
+      run:
+        working-directory: ./terraform
+        shell: bash
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Mask PWD & TOTP
+        run: |
+          pwd=$(jq -r '.inputs.password' ${GITHUB_EVENT_PATH})
+          echo "::add-mask::${pwd}"
+
+          totp=$(jq -r '.inputs.totp_code' ${GITHUB_EVENT_PATH})
+          echo "::add-mask::${totp}"
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install Validation Deps
+        run: pip install pyotp
+
+      - name: Verify Credentials
+        env:
+          INPUT_ENV: ${{ inputs.destruct_env }}
+          INPUT_PASSWORD: ${{ inputs.password }}
+          INPUT_TOTP: ${{ inputs.totp_code }}
+          TARGET_ENV: ${{ vars.TARGET_ENV }}
+          SECRET_PASSWORD: ${{ secrets.DESTRUCT_PASSWORD }}
+          SECRET_TOTP: ${{ secrets.DESTRUCT_TOTP_SECRET }}
+        run: |
+          python3 -c "
+          import os, sys, pyotp
+
+          # 1. Fetch Inputs & Secrets
+          p_in = os.environ.get('INPUT_PASSWORD', '')
+          t_in = os.environ.get('INPUT_TOTP', '')
+          e_in = os.environ.get('INPUT_ENV')
+
+          p_sec = os.environ.get('SECRET_PASSWORD')
+          t_sec = os.environ.get('SECRET_TOTP')
+          e_sec = os.environ.get('TARGET_ENV')
+
+          # 2. Is user really trying to destroy right environment?
+          if e_in != e_sec:
+            print('::error::❌ Destruction environment mismatch!')
+            sys.exit(1)
+
+          # 3. Check if secrets exist
+          if not p_sec or not t_sec:
+            print('::error::Destruction secrets (DESTRUCT_PASSWORD, DESTRUCT_TOTP_SECRET) are missing!')
+            sys.exit(1)
+
+          # 4. Verify Password
+          if p_in != p_sec:
+            print('::error::❌ Password verification failed!')
+            sys.exit(1)
+
+          # 5. Verify TOTP
+          # Strip spaces just in case
+          t_in = t_in.replace(' ', '')
+          totp = pyotp.TOTP(t_sec)
+
+          # Allow 30s window skew (default)
+          if not totp.verify(t_in, valid_window=1):
+            print('::error::❌ TOTP verification failed or expired!')
+            sys.exit(1)
+
+          print('✅ Identity Verified. Proceeding with Destruction Sequence...')
+          "
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create TF Deps
+        run: |
+          printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > ${{ vars.TARGET_ENV }}.auto.tfvars
+          printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend-config="key=${{ vars.TARGET_ENV }}.tfstate"
+        env:
+          TF_IN_AUTOMATION: true
+
+      - name: Terraform Destroy Resources
+        run: |
+          terraform destroy -auto-approve \
+            -var="target_env=${{ vars.TARGET_ENV }}" \
+            -var="ssh_port=${{ secrets.SEC_SSH_PORT }}"
+        env:
+          TF_IN_AUTOMATION: true
