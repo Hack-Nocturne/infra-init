@@ -1,8 +1,9 @@
 - name: Provision Complete Stack
   hosts: all
-  ansible_become: true
-  ansible_become_password: "{{ admin_pwd | default('') }}"
-  
+  become: true
+  vars:
+    ansible_become_password: "{{ admin_pwd | default('') }}"
+
   tasks:
     - import_tasks: tasks/01-warmup.yml
     - import_tasks: tasks/02-podman.yml
