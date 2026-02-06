@@ -29,7 +29,7 @@
     image: "{{ valkey_image }}"
     state: created
     command: valkey-server /data/valkey.conf
-    restart_policy: always
+    restart_policy: on-failure
     volumes:
       - "{{ valkey_data_dir }}:/data:Z"
     ports:
