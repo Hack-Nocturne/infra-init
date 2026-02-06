@@ -4,7 +4,7 @@
 set -euo pipefail # Strict Mode
 
 usage() {
-  echo "⚡ Usage: $0 -a APP_NAME -p APP_PORT -g GREEN_PORT -b BLUE_PORT -t TAG -f [true|false] -g [true|false]"
+  echo "⚡ Usage: $0 -a APP_NAME -p APP_PORT -g GREEN_PORT -b BLUE_PORT -t TAG -f [true|false] -r [true|false]"
   echo "  -a APP_NAME      : Name of the application (required)"
   echo "  -p APP_PORT      : Port the application listens on inside container"
   echo "  -g GREEN_PORT    : Deployment port for green mode on host network"
@@ -49,7 +49,7 @@ fi
 
 if [[ "$FLIP" == "false" ]]; then
   [[ -z "$APP_NAME" || -z "$APP_PORT" || -z "$GREEN_PORT" || -z "$BLUE_PORT" || -z "$TAG" ]] && {
-    echo "❌ When FLIP=false, -a, -p, -dg, -db, and -t are required"
+    echo "❌ When FLIP=false, -a, -p, -g, -b, and -t are required"
     usage
   }
 elif [[ -z "$APP_NAME" ]]; then

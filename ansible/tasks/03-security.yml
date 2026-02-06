@@ -38,6 +38,7 @@
     state: present
 
 - name: Ensure users exist
+  no_log: true
   user:
     name: "{{ item.name }}"
     shell: "{{ item.shell }}"
