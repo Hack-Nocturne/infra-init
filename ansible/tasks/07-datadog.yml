@@ -1,5 +1,7 @@
 - name: Provision Datadog Agent
   no_log: true
+  include_role:
+    name: datadog.datadog
   vars:
     datadog_agent_major_version: 7
     datadog_site: "{{ dd_site }}"
@@ -63,20 +65,16 @@
               name: new_log_start_with_date
               pattern: (?:\d+:[A-Z]\s+)?\d{1,2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}
 
-  roles:
-    - name: datadog.datadog
+- name: Grant Datadog Agent access to Valkey logs
+  acl:
+    path: "{{ valkey_data_dir }}/valkey.log"
+    entity: dd-agent
+    etype: user
+    permissions: r
+    state: present
+  ignore_errors: true
 
-  post_tasks:
-    - name: Grant Datadog Agent access to Valkey logs
-      acl:
-        path: "{{ valkey_data_dir }}/valkey.log"
-        entity: dd-agent
-        etype: user
-        permissions: r
-        state: present
-      ignore_errors: true
-
-    - name: Restart Datadog Agent
-      systemd:
-        name: datadog-agent
-        state: restarted
+- name: Restart Datadog Agent to apply changes
+  systemd:
+    name: datadog-agent
+    state: restarted
