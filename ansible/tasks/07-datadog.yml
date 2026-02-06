@@ -1,0 +1,82 @@
+- name: Provision Datadog Agent
+  no_log: true
+  vars:
+    datadog_agent_major_version: 7
+    datadog_site: "{{ dd_site }}"
+    datadog_api_key: "{{ dd_api_key }}"
+
+    # 2. Enables "Process" and "Log" Collection
+    datadog_config:
+      hostname: "{{ target_env | lower }}-hnt-{{ app_name }}"
+      env: "{{ target_env | lower }}"
+      process_config:
+        container_collection:
+          enabled: true
+        enabled: true # Live Process Monitoring
+      logs_enabled: true
+
+      listeners:
+        - name: auto # Auto discovery mode
+
+      apm_config:
+        enabled: true
+        apm_non_local_traffic: true
+
+      dogstatsd_non_local_traffic: true
+
+    system_probe_config:
+      sysprobe_socket: /opt/datadog-agent/run/sysprobe.sock
+    network_config:
+      enabled: true
+
+    datadog_checks:
+      disk:
+        init_config:
+        instances:
+          - use_mount: yes
+            filesystem_blacklist:
+              - tmpfs
+              - btrfs
+
+      go:
+        logs:
+          - type: tcp # TCP listener for go app to send logs
+            port: 10518
+            service: "{{ app_name }}-api"
+            source: "go" # Std. go logs pipeline
+            sourcecategory: "backend"
+
+      redisdb:
+        init_config:
+        instances:
+          - host: 127.0.0.1
+            port: 6379
+
+      logs:
+        - type: file
+          path: "{{ valkey_data_dir }}/valkey.log"
+          source: redis # Uses the built-in Redis pipeline for parsing
+          service: valkey
+          log_processing_rules:
+            # Handle multi-line logs if Valkey generates them
+            - type: multi_line
+              name: new_log_start_with_date
+              pattern: (?:\d+:[A-Z]\s+)?\d{1,2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}
+
+  roles:
+    - name: datadog.datadog
+
+  post_tasks:
+    - name: Grant Datadog Agent access to Valkey logs
+      acl:
+        path: "{{ valkey_data_dir }}/valkey.log"
+        entity: dd-agent
+        etype: user
+        permissions: r
+        state: present
+      ignore_errors: true
+
+    - name: Restart Datadog Agent
+      systemd:
+        name: datadog-agent
+        state: restarted

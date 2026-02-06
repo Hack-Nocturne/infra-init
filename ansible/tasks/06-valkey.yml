@@ -6,13 +6,30 @@
     owner: root
     group: root
 
+- name: Copy Valkey configuration file
+  copy:
+    dest: "{{ valkey_data_dir }}/valkey.conf"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Logging
+      loglevel notice
+      logfile /data/valkey.log
+
+      # Persistence
+      save 60 1
+      dir /data
+      appendonly yes
+      appendfilename "appendonly.aof"
+
 - name: Create Valkey container
   containers.podman.podman_container:
     name: "{{ valkey_container_name }}"
     image: "{{ valkey_image }}"
     state: created
-    command: valkey-server --appendonly yes
-    restart_policy: on-failure
+    command: valkey-server /data/valkey.conf
+    restart_policy: always
     volumes:
       - "{{ valkey_data_dir }}:/data:Z"
     ports:
@@ -35,3 +52,27 @@
     enabled: true
     state: started
     daemon_reload: true
+
+- name: Setup log rotation for Valkey
+  copy:
+    dest: /etc/logrotate.d/valkey
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      {{ valkey_data_dir }}/valkey.log {
+          weekly
+          rotate 4
+          missingok
+          notifempty
+          compress
+          delaycompress
+          copytruncate
+      }
+
+- name: Enable memory overcommit for Valkey
+  sysctl:
+    name: vm.overcommit_memory
+    value: '1'
+    state: present
+    reload: yes

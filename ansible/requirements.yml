@@ -3,3 +3,5 @@ collections:
     version: ">=10.7.0"
   - name: containers.podman
     version: ">=1.8.0"
+  - name: DataDog.datadog
+    version: ">=5.5.0"

@@ -28,7 +28,7 @@ cf_config = {
   zone_id   = "cf_zone_id_of_domain"
 }
 
-neon_config {
+neon_config = {
   org_id  = "neon_organization_id"
   api_key = "org-wide_api_key"
 }

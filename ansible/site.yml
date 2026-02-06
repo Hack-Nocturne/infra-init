@@ -1,6 +1,7 @@
 - name: Provision Complete Stack
   hosts: all
-  become: yes
+  ansible_become: true
+  ansible_become_password: "{{ admin_pwd | default('') }}"
   
   tasks:
     - import_tasks: tasks/01-warmup.yml
@@ -9,6 +10,7 @@
     - import_tasks: tasks/04-nginx.yml
     - import_tasks: tasks/05-opa.yml
     - import_tasks: tasks/06-valkey.yml
+    - import_tasks: tasks/07-datadog.yml
 
     - name: Reboot and Wait
       block:

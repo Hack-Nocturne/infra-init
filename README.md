@@ -58,7 +58,7 @@ ssl_key_path: /etc/nginx/ssl/cf_origin.key
 ```
 
 ### Required Secrets
-- `SSH_LOGIN_PRIV_KEY`: Private SSH key for server access
+- `ADMIN_SSH_PRIV_KEY`: Private SSH key for server access
 - `DEPLOY_SSH_PUB_KEY`: Public key for deployment user
 - `ADMIN_SSH_PUB_KEY`: Public key for admin user
 - `CF_CERT`: Cloudflare Origin Certificate

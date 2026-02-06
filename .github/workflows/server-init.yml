@@ -15,6 +15,12 @@ on:
         default: "root"
         type: string
 
+      use_sec_port:
+        description: "Use the secure SSH port for connection"
+        required: false
+        default: false
+        type: boolean
+
 jobs:
   provision:
     name: Provision Remote Servers
@@ -40,7 +46,7 @@ jobs:
         env:
           DEPLOY_SSH_PUB_KEY: ${{ secrets.DEPLOY_SSH_PUB_KEY }}
           ADMIN_SSH_PUB_KEY: ${{ secrets.ADMIN_SSH_PUB_KEY }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_LOGIN_PRIV_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.ADMIN_SSH_PRIV_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -55,8 +61,16 @@ jobs:
 
       - name: Build inventory from dispatch inputs
         run: |
+          SSH_PORT=22
+          if [ "${{ inputs.use_sec_port }}" = "true" ]; then
+            SSH_PORT=${{ secrets.SEC_SSH_PORT }}
+          fi
+
           mkdir -p inventory
-          printf "all:\n  hosts:\n    server:\n      ansible_host: \"%s\"\n      ansible_user: \"%s\"\n" "${{ inputs.server_ipv4 }}" "${{ inputs.server_username }}" > inventory/hosts.yml
+          printf "all:\n  hosts:\n    server:\n      " > inventory/hosts.yml
+          printf "ansible_host: \"%s\"\n      " "${{ inputs.server_ipv4 }}" >> inventory/hosts.yml
+          printf "ansible_user: \"%s\"\n      " "${{ inputs.server_username }}" >> inventory/hosts.yml
+          printf "ansible_port: \"%s\"\n" "${SSH_PORT}" >> inventory/hosts.yml
 
       - name: Test connectivity
         run: |
@@ -82,6 +96,7 @@ jobs:
             -e "obscured_dir=${{ secrets.OBSCURED_DIR }}" \
             -e "sec_ssh_port=${{ secrets.SEC_SSH_PORT }}" \
             -e "deploy_pwd=${{ secrets.DEPLOY_PWD }}" \
+            -e "dd_api_key=${{ secrets.DD_API_KEY }}" \
             -e "admin_pwd=${{ secrets.ADMIN_PWD }}" \
             -e "target_env=${{ vars.TARGET_ENV }}" \
             ${EXTRA_ARGS}

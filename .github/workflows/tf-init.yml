@@ -1,4 +1,4 @@
-name: Terraform Lifecycle
+name: Terraform Resource Provision
 
 on:
   pull_request:
@@ -56,7 +56,7 @@ jobs:
       - name: Create TF Deps
         run: |
           printf '%s' "${{ secrets.TF_VARS_B64 }}" | base64 --decode > ${{ vars.TARGET_ENV }}.auto.tfvars
-          printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.ADMIN_SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -126,6 +126,7 @@ jobs:
   terraform-apply:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    environment: ${{ vars.TARGET_ENV }}
 
     steps:
       - name: Checkout Code
@@ -140,7 +141,7 @@ jobs:
 
       - name: Create TF Deps
         run: |
-          printf '%s' "${{ secrets.SSH_LOGIN_PUB_KEY }}" > key.pub
+          printf '%s' "${{ secrets.ADMIN_SSH_PUB_KEY }}" > key.pub
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
