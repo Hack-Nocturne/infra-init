@@ -1,4 +1,5 @@
 - name: Provision Datadog Agent
+  ignore_unreachable: true
   no_log: true
   include_role:
     name: datadog.datadog
@@ -54,16 +55,16 @@
           - host: 127.0.0.1
             port: 6379
 
-      logs:
-        - type: file
-          path: "{{ valkey_data_dir }}/valkey.log"
-          source: redis # Uses the built-in Redis pipeline for parsing
-          service: valkey
-          log_processing_rules:
-            # Handle multi-line logs if Valkey generates them
-            - type: multi_line
-              name: new_log_start_with_date
-              pattern: (?:\d+:[A-Z]\s+)?\d{1,2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}
+        logs:
+          - type: file
+            path: "{{ valkey_data_dir }}/valkey.log"
+            source: redis # Uses the built-in Redis pipeline for parsing
+            service: valkey
+            log_processing_rules:
+              # Handle multi-line logs if Valkey generates them
+              - type: multi_line
+                name: new_log_start_with_date
+                pattern: (?:\d+:[A-Z]\s+)?\d{1,2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}
 
 - name: Grant Datadog Agent access to Valkey logs
   acl:
