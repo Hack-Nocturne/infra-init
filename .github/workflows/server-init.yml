@@ -75,7 +75,7 @@ jobs:
       - name: Test connectivity
         run: |
           echo "Testing connectivity to target hosts..."
-          ansible all -m ping
+          ansible all -m ping -e "ansible_become_pass=${{ secrets.ADMIN_PWD }}"
 
       - name: Install ansible dependencies
         run: |
