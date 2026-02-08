@@ -1,6 +1,7 @@
 - name: Provision Complete Stack
   hosts: all
   become: true
+  ignore_unreachable: yes
   vars:
     ansible_become_password: "{{ admin_pwd | default('') }}"
 

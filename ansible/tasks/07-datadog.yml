@@ -1,5 +1,4 @@
 - name: Provision Datadog Agent
-  ignore_unreachable: true
   no_log: true
   include_role:
     name: datadog.datadog
