@@ -142,13 +142,7 @@ target="${container}-${deploy_port}"
 systemctl --user enable podman-auto-update.service podman-auto-update.timer --now
 
 # --- 8. Stop old container silently ---
-if podman ps -a --format '{{.Names}}' | grep -wq "$target"; then
-  systemctl --user stop $target
-  echo "✅ Stopped old container: $target"
-  sleep 2s
-else
-  echo "⚠️ No old container found for $new_color deployment, continuing..."
-fi
+systemctl --user stop $target 2>/dev/null || true
 
 # --- 9. Prepare new Quadlet (podman-rootless) ---
 target_dir="$HOME/.config/containers/systemd"
