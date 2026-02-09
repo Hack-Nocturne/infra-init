@@ -84,7 +84,7 @@ if [[ "$FLIP" == "false" ]]; then
 
       # Create secret from the value
       secret_name="${APP_NAME}_${key,,}" # to lowercase
-      printf "$value" | podman secret create --replace "$secret_name" -
+      printf "%s" "$value" | podman secret create --replace "$secret_name" -
       SECRET_NAMES+=("$secret_name")
     done < "$ENV_FILE"
 
