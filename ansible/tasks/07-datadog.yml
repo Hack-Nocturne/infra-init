@@ -70,13 +70,9 @@
           - type: journald
             include_matches:
               - _TRANSPORT=kernel
-              - MESSAGE=*nftables-dropped:*
+              - PRIORITY=6
             service: firewall
             source: nftables
-            log_processing_rules:
-              - type: exclude_at_match
-                name: exclude_non_dropped
-                pattern: ^(?!.*nftables-dropped:).*$
             tags:
               - "component:network_security"
 
