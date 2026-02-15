@@ -20,6 +20,14 @@
     owner: root
     group: root
 
+- name: Ensure OPA log directory exists
+  file:
+    path: "{{ opa_log_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
 - name: Create systemd service for OPA
   copy:
     dest: /etc/systemd/system/opa.service
@@ -29,7 +37,9 @@
       After=network.target
 
       [Service]
-      ExecStart={{ opa_bin_path }} run -s -a :{{ opa_port }} -c {{ opa_data_dir }}/opa-config.yaml
+      ExecStart={{ opa_bin_path }} run -s -a :{{ opa_port }} -c {{ opa_data_dir }}/opa-config.yaml --log-level error --log-format json
+      StandardOutput=file:{{ opa_log_dir }}/stdout.log
+      StandardError=file:{{ opa_log_dir }}/stderr.log
       Restart=on-failure
       User=root
       Group=root

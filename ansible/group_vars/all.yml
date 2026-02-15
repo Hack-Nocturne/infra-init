@@ -71,6 +71,7 @@ green_upstreams:
 
 opa_port: 1010
 opa_data_dir: /etc/opa
+opa_log_dir: /var/log/opa
 opa_bin_path: /usr/local/bin/opa
 
 # endregion

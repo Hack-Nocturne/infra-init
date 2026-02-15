@@ -65,6 +65,55 @@
                 name: new_log_start_with_date
                 pattern: (?:\d+:[A-Z]\s+)?\d{1,2}\s+\w{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}
 
+      journald:
+        logs:
+          - type: journald
+            include_matches:
+              - _TRANSPORT=kernel
+              - MESSAGE=*nftables-dropped:*
+            service: firewall
+            source: nftables
+            log_processing_rules:
+              - type: exclude_at_match
+                name: exclude_non_dropped
+                pattern: ^(?!.*nftables-dropped:).*$
+            tags:
+              - "component:network_security"
+
+      opa:
+        logs:
+          - type: file
+            path: "{{ opa_log_dir }}/stdout.log"
+            service: decidex
+            source: open_policy_agent
+            tags:
+              - "stream:stdout"
+
+          - type: file
+            path: "{{ opa_log_dir }}/stderr.log"
+            service: decidex
+            source: open_policy_agent
+            tags:
+              - "stream:stderr"
+
+- name: Grant Datadog Agent access to systemd journal
+  user:
+    name: dd-agent
+    groups: systemd-journal
+    append: yes
+
+- name: Grant Datadog Agent ACL for OPA logs
+  acl:
+    path: "{{ opa_log_dir }}/{{ item }}"
+    entity: dd-agent
+    etype: user
+    permissions: r
+    state: present
+  loop:
+    - stdout.log
+    - stderr.log
+  ignore_errors: true
+
 - name: Grant Datadog Agent access to Valkey logs
   acl:
     path: "{{ valkey_data_dir }}/valkey.log"
